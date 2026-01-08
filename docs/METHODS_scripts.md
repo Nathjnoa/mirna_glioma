@@ -44,6 +44,7 @@ Este documento resume lo que hacen los scripts en `scripts/` del proyecto `mirna
   - `as_is`, `binary_cut`, `collapse_levels`, `range_vs`, `survival_cut`, `continuous`.
 - Usa `edgeR` con normalizacion TMM, `filterByExpr`, y modelo QL (`glmQLFit`/`glmQLFTest`).
 - Para factores multinivel produce omnibus y comparaciones vs referencia; para binarios produce contraste case vs ref.
+- Comparaciones binarias adicionales via `collapse_levels` incluyen P53_(TP53), SINAPTOFISINA y OLIG_2 (1 vs 0), excluyendo nivel 2 con `drop_unmapped`.
 - Salidas por comparacion: tablas completas, FDR<0.05, FDR<0.1, MD plots y volcano plots.
 - Resumen QC por comparacion y resumen global.
 
@@ -71,11 +72,23 @@ Este documento resume lo que hacen los scripts en `scripts/` del proyecto `mirna
 
 ### Bubble plots de miEAA GSEA (`10_miEAA_GSEA_bubble_plots.R`)
 
-- Lee la tabla completa mas reciente `MiEAA_GSEA_all_*.tsv` por comparacion (run_tag) y detecta columnas de terminos/p-values de forma robusta.
+- Lee la tabla completa mas reciente `MiEAA_GSEA_all_*.tsv` por comparacion (run_tag) y detecta columnas de terminos/p-values de forma robusta (prioridad: P-adjusted > Q-value > P-value).
 - Para miRPathDB, selecciona top N por base (GO BP/MF, KEGG, Reactome) y genera un bubble plot 2x2 (PDF/SVG/PNG).
-- Selecciona top N por base miRPathDB y genera un bubble plot 2x2 (PDF/SVG/PNG).
 - Registra logs en `logs/` y copia del log en `results/figures/MiEAA_GSEA_bubble/<run_tag>/`.
-- Genera un resumen global por comparacion.
+
+### QC barplots de miEAA GSEA (`11_miEAA_GSEA_barplots.R`)
+
+- Lee la tabla completa mas reciente `MiEAA_GSEA_all_*.tsv` por comparacion; si no existe, usa `MiEAA_GSEA_top50_*.tsv` con warning.
+- Detecta columna de significancia (P-adjusted/Q-value/P-value) y direccion (enrichment).
+- Genera barplots apilados por base y direccion para un cutoff (y opcionalmente un segundo cutoff).
+- Exporta PDF/SVG y registra logs en `logs/` y copia en `results/figures/MiEAA_GSEA_QC/<run_tag>/`.
+
+### Categories p-values miEAA (`12_miEAA_GSEA_categories_pvals.R`)
+
+- Genera distribuciones de -log10(Q-value) y -log10(P-adjusted) por categoria (boxplot + jitter).
+- Ordena categorias por mediana de -log10(metric) y exporta PDF/SVG.
+- Usa `MiEAA_GSEA_all_*.tsv` si existe; si no, `MiEAA_GSEA_top50_*.tsv` con warning.
+- Registra logs en `logs/` y copia en `results/figures/MiEAA_GSEA_categories_pvals/<run_tag>/`.
 
 ## F) Analisis de supervivencia
 
@@ -207,6 +220,21 @@ Rscript scripts/10_miEAA_GSEA_bubble_plots.R \
   --in_root results/tables/MiEAA_GSEA \
   --out_root results/figures/MiEAA_GSEA_bubble \
   --run_tag A_conservative
+
+# 11: QC barplots miEAA
+Rscript scripts/11_miEAA_GSEA_barplots.R \
+  --spec config/de_specs.csv \
+  --in_root results/tables/MiEAA_GSEA \
+  --out_root results/figures/MiEAA_GSEA_QC \
+  --run_tag A_conservative \
+  --cutoff 0.25
+
+# 12: categories p-values miEAA
+Rscript scripts/12_miEAA_GSEA_categories_pvals.R \
+  --spec config/de_specs.csv \
+  --in_root results/tables/MiEAA_GSEA \
+  --out_root results/figures/MiEAA_GSEA_categories_pvals \
+  --run_tag A_conservative
 ```
 
 ### Tabla de parametros clave
@@ -225,6 +253,9 @@ Rscript scripts/10_miEAA_GSEA_bubble_plots.R \
 | `mieaa_sig_level` | Filtro en request miEAA | `1` |
 | `mieaa_min_hits` | Min hits para miEAA | `5` |
 | `bubble_n_mirpathdb` | Top N por base (miRPathDB) | `12` |
+| `qc_cutoff` | Umbral de significancia para QC | `0.25` |
+| `qc_also_cutoff` | Umbral adicional QC (opcional) | `{NA}` |
+| `categories_wrap_width` | Wrap labels categories p-values | `35` |
 | `km_cut` | Regla de corte KM | `median` |
 | `min_group_n` | Minimo por grupo en KM | `5` |
 | `standardize` | HR por 1 SD (Cox) | `FALSE` |
@@ -242,3 +273,5 @@ Rscript scripts/10_miEAA_GSEA_bubble_plots.R \
 - `scripts/08_KM_DE_candidates.R`: KM alto/bajo para candidatos DE.
 - `scripts/09_miEAA_GSEA_all_comparisons.R`: GSEA miEAA desde rankings por comparacion (default `signed_sqrtF`).
 - `scripts/10_miEAA_GSEA_bubble_plots.R`: bubble plots miEAA (miRPathDB 2x2) desde tablas completas.
+- `scripts/11_miEAA_GSEA_barplots.R`: barplots QC miEAA por base y direccion (cutoffs configurables).
+- `scripts/12_miEAA_GSEA_categories_pvals.R`: distribuciones p-values por categoria (Q-value y P-adjusted).

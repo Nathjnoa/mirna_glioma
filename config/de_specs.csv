@@ -5,5 +5,6 @@ EDAD_cont_10y,continuous,EDAD,,10,per,,"",,drop_na
 SEGUIM_>=24m,survival_cut,MESES_SEGUIMIENTO_,MUERTE,24,ge,ge24,lt24,,exclude_if_censored_lt_cut
 KI67_>20,binary_cut,KI67_%,,20,gt,gt20,le20,,drop_na
 RESECCION_01_vs_2,collapse_levels,RADIOLOGICAL_RESECTION,,,,"2","01","0|1=01;2=2",drop_na
-
-
+P53_TP53_1_vs_0,collapse_levels,P53_(TP53),,,,"1","0","0=0;1=1",drop_unmapped
+SINAPTOFISINA_1_vs_0,collapse_levels,SINAPTOFISINA,,,,"1","0","0=0;1=1",drop_unmapped
+OLIG__1_vs_0,collapse_levels,OLIG_2,,,,"1","0","0=0;1=1",drop_unmapped

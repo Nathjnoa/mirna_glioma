@@ -25,10 +25,14 @@ conda env create -f env/environment.yml
 ## Documentacion
 - Metodos y descripcion del pipeline: `docs/METHODS_scripts.md`.
 - Figuras miEAA GSEA (bubble plots): `scripts/10_miEAA_GSEA_bubble_plots.R`.
+- QC miEAA GSEA (barplots): `scripts/11_miEAA_GSEA_barplots.R`.
+- Categories p-values miEAA: `scripts/12_miEAA_GSEA_categories_pvals.R`.
 
 ## Reproducibilidad
 - Cada script genera logs con timestamp en `logs/`.
 - Los bubble plots copian el log en `results/figures/MiEAA_GSEA_bubble/<run_tag>/`.
+- Los barplots QC copian el log en `results/figures/MiEAA_GSEA_QC/<run_tag>/`.
+- Categories p-values copian el log en `results/figures/MiEAA_GSEA_categories_pvals/<run_tag>/`.
 - Las salidas se escriben en `results/` y `data/processed/`.
 
 ## Licencia
