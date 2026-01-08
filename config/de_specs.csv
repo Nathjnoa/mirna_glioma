@@ -1,0 +1,9 @@
+analysis_id,mode,var,event_var,cut,cut_type,case,ref,collapse_map,exclude_rule
+GENERO,as_is,GENERO,,,"",1,0,,
+EDAD_40_60_vs_gt70,range_vs,EDAD,,,"",gt70,age40_60,"40-60=age40_60;71-200=gt70",drop_unmapped
+EDAD_cont_10y,continuous,EDAD,,10,per,,"",,drop_na
+SEGUIM_>=24m,survival_cut,MESES_SEGUIMIENTO_,MUERTE,24,ge,ge24,lt24,,exclude_if_censored_lt_cut
+KI67_>20,binary_cut,KI67_%,,20,gt,gt20,le20,,drop_na
+RESECCION_01_vs_2,collapse_levels,RADIOLOGICAL_RESECTION,,,,"2","01","0|1=01;2=2",drop_na
+
+

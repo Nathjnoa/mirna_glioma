@@ -1,0 +1,224 @@
+# Metodos computacionales (scripts)
+
+Este documento resume lo que hacen los scripts en `scripts/` del proyecto `mirna_glioma`. El enfoque es de metodos reproducibles: se describen entradas, filtros, analisis, salidas y supuestos. Donde faltan detalles, se usan placeholders.
+
+## A) Diseno del estudio y datos
+
+- Tipo de datos: matriz de conteos de RNAs con columnas de muestras y columnas de anotacion (p. ej., `id`, `type`, `entrez_id`, `HGNC_symbol`).
+- Origen y criterios de inclusion/exclusion: {ORIGEN_MUESTRAS}, {CRITERIOS_INCLUSION}, {CRITERIOS_EXCLUSION}.
+- Entradas principales (por defecto en los scripts):
+  - Conteos: `data/intermediate/Gliomas_all_counts_merged.csv`.
+  - Metadatos: `data/intermediate/Metadatos_gliomas_verificados.csv`.
+- Filtrado de muestras post-mortem: se excluyen columnas de muestras cuyo nombre empieza con `A` (regex `^A`).
+
+## B) Preprocesamiento y QC
+
+### Inspeccion inicial de conteos (`01_inspeccion_counts.R`)
+
+- Lee la matriz de conteos, detecta columnas de anotacion y construye `counts_mat`.
+- Excluye muestras con prefijo `A`.
+- Coercion robusta a numerico y chequeos de integridad (NA, negativos, no enteros).
+- Calcula library size con `edgeR::DGEList` y TMM (effective library size).
+- Calcula fraccion de ceros por muestra y conteo total por feature.
+- Genera figuras de inspeccion (histogramas de library size, fraccion de ceros, boxplot log1p).
+- Guarda un RDS con objetos clave de inspeccion.
+
+### Normalizacion logCPM y QC multivariado (`02_logcpm_mds.R`)
+
+- Filtra muestras con `library_size < 100000` y features con:
+  - conteo total > 0,
+  - varianza > 0,
+  - suma de conteos >= 10.
+- Calcula logCPM pre y post TMM (edgeR) con `prior.count=2`.
+- Genera RLE pre/post, densidades pre/post, y barplots de library size.
+- Calcula MDS (limma) sobre logCPM post TMM y exporta coordenadas.
+- Exporta matriz `logCPM_TMM_*.csv` y tablas de library sizes.
+
+## C) Analisis estadistico / modelado
+
+### Diferencial de expresion multicomparacion (`03_edgeR_multiDE.R`)
+
+- Alinea `counts_mat` con `metadata` y exporta bases filtradas.
+- Permite ejecucion por lista de variables (`--vars`) o por `spec` (`config/de_specs.csv`).
+- Modos soportados (segun `spec`):
+  - `as_is`, `binary_cut`, `collapse_levels`, `range_vs`, `survival_cut`, `continuous`.
+- Usa `edgeR` con normalizacion TMM, `filterByExpr`, y modelo QL (`glmQLFit`/`glmQLFTest`).
+- Para factores multinivel produce omnibus y comparaciones vs referencia; para binarios produce contraste case vs ref.
+- Salidas por comparacion: tablas completas, FDR<0.05, FDR<0.1, MD plots y volcano plots.
+- Resumen QC por comparacion y resumen global.
+
+### Diferencial de expresion restringido a miRNA/protein_coding (`03_2_edgeR_multiDE_miRNA_protCoding.R`)
+
+- Filtra features por biotipo (`type`) manteniendo `mirna` y `protein_coding`.
+- Usa `spec` para definir comparaciones (mismos modos que arriba).
+- Ejecuta `edgeR` QL con TMM y `filterByExpr`.
+- Salidas y resumen global similares a `03_edgeR_multiDE.R`.
+
+## D) Correccion por multiples pruebas
+
+- Ajuste de FDR con Benjamini-Hochberg (BH) en los analisis de DE y en analisis exploratorios de supervivencia.
+- Umbrales reportados frecuentemente: 0.05 y 0.10 (segun tablas y figuras generadas).
+
+## E) Analisis funcional / enriquecimiento
+
+### GSEA con miEAA (`09_miEAA_GSEA_all_comparisons.R`)
+
+- Extrae miRNAs desde tablas DE (campo `type`) y genera ranking segun `rank_mode` (por defecto `signed_logp`).
+- Ejecuta GSEA via `rbioapi::rba_mieaa_enrich` en categorias predefinidas (miRPathDB, GO, miRTarBase, etc.).
+- Exporta rankings (mature y precursor), top50 por Q-value y lista Q<0.05 por comparacion.
+- Genera un resumen global por comparacion.
+
+## F) Analisis de supervivencia
+
+### Exploratorio Spearman (`06_survival_exploratory_spearman.R`)
+
+- Construye la union de features con FDR < umbral en todas las comparaciones DE.
+- Calcula correlacion Spearman entre expresion (logCPM) y tiempo de seguimiento.
+- Reporta resultados para todas las muestras y solo eventos.
+- Genera tabla y un set limitado de figuras.
+
+### Cox univariado (`07_survival_cox_univariate.R`)
+
+- Usa la union de features DE con FDR < umbral.
+- Ajusta modelos de Cox univariados por feature con `survival::coxph`.
+- Opcion de estandarizar la expresion (HR por 1 SD) o usar logCPM directo.
+- Reporta HR, IC95%, p, FDR y tablas con membership.
+
+### Kaplan-Meier de candidatos DE (`08_KM_DE_candidates.R`)
+
+- Selecciona candidatos DE (FDR < umbral) de todas las comparaciones.
+- Divide en alta vs baja expresion (mediana o cuantiles extremos) y evalua log-rank.
+- Genera PDF con curvas KM y tabla resumen con p-values y FDR.
+
+## G) Visualizacion y QC de DE
+
+### Heatmaps de RNAs significativos (`04_heatmaps_sigRNAs.R`)
+
+- Toma la tabla DE mas reciente por comparacion y selecciona features con FDR < umbral.
+- Usa logCPM (TMM) y transforma a Z-score por feature.
+- Genera heatmaps con `ComplexHeatmap` y guarda listas de features.
+
+### QC por feature significativo (`05_deg_qc_plots.R`)
+
+- Genera box/jitter (categoricos) o scatter (continuos) para top features por FDR.
+- Produce PNGs y PDF opcional con resumen de QC visual.
+
+## H) Software y entorno computacional
+
+- Lenguaje principal: R ({R_VERSION}).
+- Paquetes clave: edgeR ({EDGER_VERSION}), limma ({LIMMA_VERSION}), data.table ({DATATABLE_VERSION}),
+  ComplexHeatmap ({COMPLEXHEATMAP_VERSION}), circlize ({CIRCLIZE_VERSION}), survival ({SURVIVAL_VERSION}),
+  survminer ({SURVMINER_VERSION, opcional}), rbioapi ({RBIOAPI_VERSION}).
+- Sistema operativo / entorno: {OS_DISTRIBUCION}, {HARDWARE_RESUMEN}.
+
+## Reproducibilidad
+
+- Los scripts generan logs con timestamp en `logs/`.
+- Las salidas se almacenan en `results/figures/`, `results/tables/`, `results/DE*/` y `data/processed/`.
+- No se fijan semillas aleatorias; si se requiere determinismo estricto, definir `set.seed({SEED})`.
+
+### Checklist de reproducibilidad
+
+- [ ] Confirmar versiones de R y paquetes.
+- [ ] Guardar copia de `config/de_specs.csv` usada en el run.
+- [ ] Registrar rutas exactas de inputs (conteos y metadatos).
+- [ ] Conservar logs con timestamp del run.
+- [ ] Verificar que las tablas DE usadas son las mas recientes (mtime).
+
+### Plantilla de comandos (ejemplos)
+
+```bash
+# 01: inspeccion inicial
+Rscript scripts/01_inspeccion_counts.R data/intermediate/Gliomas_all_counts_merged.csv
+
+# 02: logCPM + MDS
+Rscript scripts/02_logcpm_mds.R data/intermediate/Gliomas_all_counts_merged.csv
+
+# 03: DE multi (por spec)
+Rscript scripts/03_edgeR_multiDE.R \
+  --counts data/intermediate/Gliomas_all_counts_merged.csv \
+  --meta data/intermediate/Metadatos_gliomas_verificados.csv \
+  --spec config/de_specs.csv \
+  --outdir results/DE
+
+# 03_2: DE miRNA+protein_coding
+Rscript scripts/03_2_edgeR_multiDE_miRNA_protCoding.R \
+  --counts data/intermediate/Gliomas_all_counts_merged.csv \
+  --meta data/intermediate/Metadatos_gliomas_verificados.csv \
+  --spec config/de_specs.csv \
+  --outdir results/DE_miRNA_protCoding
+
+# 04: heatmaps
+Rscript scripts/04_heatmaps_sigRNAs.R \
+  --counts data/intermediate/Gliomas_all_counts_merged.csv \
+  --meta data/intermediate/Metadatos_gliomas_verificados.csv \
+  --spec config/de_specs.csv \
+  --de_dir results/DE
+
+# 05: QC plots por DEG
+Rscript scripts/05_deg_qc_plots.R \
+  --counts data/intermediate/Gliomas_all_counts_merged.csv \
+  --meta data/intermediate/Metadatos_gliomas_verificados.csv \
+  --spec config/de_specs.csv \
+  --de_dir results/DE
+
+# 06: Spearman exploratorio
+Rscript scripts/06_survival_exploratory_spearman.R \
+  --counts data/intermediate/Gliomas_all_counts_merged.csv \
+  --meta data/intermediate/Metadatos_gliomas_verificados.csv \
+  --spec config/de_specs.csv \
+  --de_dir results/DE \
+  --fdr 0.1
+
+# 07: Cox univariado
+Rscript scripts/07_survival_cox_univariate.R \
+  --counts data/intermediate/Gliomas_all_counts_merged.csv \
+  --meta data/intermediate/Metadatos_gliomas_verificados.csv \
+  --spec config/de_specs.csv \
+  --de_dir results/DE \
+  --fdr 0.1
+
+# 08: KM para candidatos DE
+Rscript scripts/08_KM_DE_candidates.R \
+  --counts data/intermediate/Gliomas_all_counts_merged.csv \
+  --meta data/intermediate/Metadatos_gliomas_verificados.csv \
+  --spec config/de_specs.csv \
+  --de_root results/DE \
+  --fdr_cut 0.1
+
+# 09: miEAA GSEA
+Rscript scripts/09_miEAA_GSEA_all_comparisons.R \
+  --spec config/de_specs.csv \
+  --de_root results/DE \
+  --out_root results/tables/MiEAA_GSEA
+```
+
+### Tabla de parametros clave
+
+| Parametro | Significado | Valor (por defecto) |
+|---|---|---|
+| `drop_regex` | Patron para excluir muestras (post-mortem) | `^A` |
+| `min_libsize` | Filtro global de library size | `100000` |
+| `prior_count` | Prior para logCPM | `2` |
+| `min_expr` | Filtro por suma de conteos (script 02) | `10` |
+| `fdrs` | Umbrales para figuras QC/heatmaps | `0.05,0.1` |
+| `fdr_thr` | Umbral union DE para supervivencia | `0.1` |
+| `max_features` | Max features en heatmap/QC | `200` (heatmap), `30` (QC) |
+| `rank_mode` | Score para ranking miEAA | `signed_logp` |
+| `km_cut` | Regla de corte KM | `median` |
+| `min_group_n` | Minimo por grupo en KM | `5` |
+| `standardize` | HR por 1 SD (Cox) | `FALSE` |
+
+## Resumen por script (trazabilidad)
+
+- `scripts/01_inspeccion_counts.R`: inspeccion de conteos, library size, ceros y figuras basicas.
+- `scripts/02_logcpm_mds.R`: logCPM TMM, RLE, densidades, MDS/PCA y exportes.
+- `scripts/03_edgeR_multiDE.R`: DE con edgeR (QL), multiples modos via `spec` o `--vars`.
+- `scripts/03_2_edgeR_multiDE_miRNA_protCoding.R`: DE restringido a miRNA y protein_coding.
+- `scripts/04_heatmaps_sigRNAs.R`: heatmaps Z-score de features DE significativas.
+- `scripts/05_deg_qc_plots.R`: QC visual por feature (box/jitter o scatter continuo).
+- `scripts/06_survival_exploratory_spearman.R`: Spearman expr vs seguimiento en union DE.
+- `scripts/07_survival_cox_univariate.R`: Cox univariado en union DE con FDR.
+- `scripts/08_KM_DE_candidates.R`: KM alto/bajo para candidatos DE.
+- `scripts/09_miEAA_GSEA_all_comparisons.R`: GSEA miEAA desde rankings por comparacion.
+

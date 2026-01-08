@@ -1,0 +1,17 @@
+# Data and results (reproducible from scripts)
+data/
+results/
+logs/
+
+# R / RStudio
+.Rhistory
+.RData
+.Rproj.user/
+
+# Notebooks
+notebooks/.ipynb_checkpoints/
+
+# OS / editor
+.DS_Store
+*.swp
+*Zone.Identifier
