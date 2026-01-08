@@ -30,4 +30,4 @@ conda env create -f env/environment.yml
 - Las salidas se escriben en `results/` y `data/processed/`.
 
 ## Licencia
-- {PENDIENTE}
+- MIT (ver `LICENSE`).
