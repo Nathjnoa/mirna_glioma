@@ -35,24 +35,22 @@ independent_p_adj_cli <- tolower(get_arg("--independent_p_adj", "true")) %in% c(
 # Si quieres cambiar categorías desde CLI: --categories "A,B,C"
 cats_arg <- get_arg("--categories", "")
 default_cats <- c(
-  "miRPathDB_Reactome_mature",
+  "miRPathDB_GO_Biological_process_mature",
+  "miRPathDB_GO_Molecular_function_mature",
   "miRPathDB_KEGG_mature",
-  "miRPathDB_WikiPathways_mature",
-  "GO_Annotations_mature",
-  "miRTarBase_mature",
-  "MNDR_mature",
-  "miRWalk_Pathways_mature"
+  "miRPathDB_Reactome_mature"
 )
 categories <- if (nzchar(cats_arg)) trimws(strsplit(cats_arg, ",")[[1]]) else default_cats
 categories <- categories[nzchar(categories)]
 
 # ranking score choice
-rank_mode <- get_arg("--rank_mode", "signed_logp") # signed_logp | signed_F | signed_logFC
+# Nota: para glmQLFTest, recomendado usar signed_sqrtF; signed_logp puede sobreponderar p-valores extremos en GSEA ponderado.
+rank_mode <- get_arg("--rank_mode", "signed_sqrtF") # signed_sqrtF | signed_logp | signed_F | signed_logFC
 
 # corrida definitiva (A_conservative)
 run_tag <- "A_conservative"
 run_independent_p_adj <- FALSE
-run_min_hits <- 10
+run_min_hits <- 5
 
 # ---- path resolution (robusto a CWD) ----
 get_script_dir <- function() {
@@ -125,6 +123,22 @@ suppressPackageStartupMessages({
   library(rbioapi)
 })
 
+mieaa_cats <- rbioapi::rba_mieaa_cats(species = species, mirna_type = mirna_type)
+mieaa_ids <- if (is.data.frame(mieaa_cats)) {
+  id_col <- intersect(c("category_id", "category", "id", "name"), names(mieaa_cats))
+  if (length(id_col) == 0) as.character(mieaa_cats[[1]]) else as.character(mieaa_cats[[id_col[1]]])
+} else {
+  as.character(mieaa_cats)
+}
+mieaa_ids <- mieaa_ids[!is.na(mieaa_ids) & nzchar(mieaa_ids)]
+missing_cats <- setdiff(categories, mieaa_ids)
+if (length(missing_cats) > 0) {
+  stop(
+    "Categorías miEAA no encontradas: ", paste(missing_cats, collapse = ", "),
+    "\nSugerencia: imprime rba_mieaa_cats() y filtra por 'miRPathDB' y 'GO'."
+  )
+}
+
 # --- helpers ---
 latest_de_file <- function(dir_path) {
   ff <- list.files(dir_path, pattern = "^DE_.*_all_.*\\.tsv$", full.names = TRUE)
@@ -143,8 +157,8 @@ find_de_file_fallback <- function(de_root, aid_fs) {
   cand[order(file.info(cand)$mtime, decreasing = TRUE)][1]
 }
 
-build_ranked_list <- function(de, rank_mode = "signed_logp") {
-  # require columns: feature_id, type, logFC, PValue (and optionally F)
+build_ranked_list <- function(de, rank_mode = "signed_sqrtF") {
+  # require columns: feature_id, type, logFC, PValue (and optionally F for signed_F/signed_sqrtF)
   if (!("feature_id" %in% names(de))) stop("DE table sin 'feature_id'")
   if (!("type" %in% names(de))) stop("DE table sin 'type'")
   de_mi <- de[tolower(de$type) == "mirna", , drop = FALSE]
@@ -152,7 +166,7 @@ build_ranked_list <- function(de, rank_mode = "signed_logp") {
   # columnas necesarias
   if (!("logFC" %in% names(de_mi))) stop("DE miRNA sin 'logFC'")
   if (rank_mode == "signed_logp" && !("PValue" %in% names(de_mi))) stop("DE miRNA sin 'PValue'")
-  if (rank_mode == "signed_F" && !("F" %in% names(de_mi))) stop("DE miRNA sin 'F'")
+  if (rank_mode %in% c("signed_F", "signed_sqrtF") && !("F" %in% names(de_mi))) stop("DE miRNA sin 'F'")
 
   # limpiar
   de_mi$logFC <- as_num_safe(de_mi$logFC)
@@ -161,7 +175,7 @@ build_ranked_list <- function(de, rank_mode = "signed_logp") {
 
   ok <- is.finite(de_mi$logFC)
   if (rank_mode == "signed_logp") ok <- ok & is.finite(de_mi$PValue)
-  if (rank_mode == "signed_F") ok <- ok & is.finite(de_mi$F)
+  if (rank_mode %in% c("signed_F", "signed_sqrtF")) ok <- ok & is.finite(de_mi$F)
 
   de_mi <- de_mi[ok, , drop = FALSE]
   if (nrow(de_mi) < 20) stop("Muy pocos miRNAs con stats válidas (n<20).")
@@ -169,12 +183,14 @@ build_ranked_list <- function(de, rank_mode = "signed_logp") {
   # score
   if (rank_mode == "signed_logp") {
     de_mi$score <- sign(de_mi$logFC) * (-log10(pmax(de_mi$PValue, .Machine$double.xmin)))
+  } else if (rank_mode == "signed_sqrtF") {
+    de_mi$score <- sign(de_mi$logFC) * sqrt(pmax(de_mi$F, 0))
   } else if (rank_mode == "signed_F") {
     de_mi$score <- sign(de_mi$logFC) * de_mi$F
   } else if (rank_mode == "signed_logFC") {
     de_mi$score <- de_mi$logFC
   } else {
-    stop("rank_mode inválido: ", rank_mode)
+    stop("rank_mode inválido: ", rank_mode, " (esperado: signed_sqrtF | signed_logp | signed_F | signed_logFC)")
   }
 
   # deduplicar por feature_id (si existiera)
@@ -248,36 +264,6 @@ for (aid in analysis_ids) {
   writeLines(ranked_mirnas, rank_mature_fp)
   cat("Export ranking mature:", rank_mature_fp, " n=", length(ranked_mirnas), "\n")
 
-  # Convert to precursor and export
-  prec <- NULL
-  conv <- tryCatch({
-    rbioapi::rba_mieaa_convert_type(
-      ids = ranked_mirnas,
-      species = species,
-      from_type = "mature",
-      to_type = "precursor"
-    )
-  }, error = function(e) {
-    cat("WARNING convert_type failed:", conditionMessage(e), "\n")
-    NULL
-  })
-
-  if (!is.null(conv) && is.data.frame(conv) && nrow(conv) > 0) {
-    out_col <- intersect(c("precursor", "to", "output", "converted", "to_id"), names(conv))
-    if (length(out_col) == 0) out_col <- names(conv)[ncol(conv)]
-    prec <- as.character(conv[[out_col[1]]])
-    prec <- prec[!is.na(prec) & nzchar(prec)]
-    prec <- prec[!duplicated(prec)]
-  }
-
-  if (!is.null(prec) && length(prec) > 0) {
-    rank_prec_fp <- file.path(run_dir, paste0("MiEAA_ranked_precursor_", aid_fs, "_", ts, ".txt"))
-    writeLines(prec, rank_prec_fp)
-    cat("Export ranking precursor:", rank_prec_fp, " n=", length(prec), "\n")
-  } else {
-    cat("WARNING: precursor ranking vacío; no se exporta precursor.\n")
-  }
-
   # run GSEA (no filtrar)
   res_all <- tryCatch({
     rbioapi::rba_mieaa_enrich(
@@ -311,6 +297,10 @@ for (aid in analysis_ids) {
     )
     next
   }
+
+  # export full unfiltered results
+  all_fp <- file.path(run_dir, paste0("MiEAA_GSEA_all_", aid_fs, "_", run_tag, "_", ts, ".tsv"))
+  write.table(res_all, all_fp, sep = "\t", quote = FALSE, row.names = FALSE)
 
   res_all <- coerce_results(res_all)
   n_terms <- nrow(res_all)

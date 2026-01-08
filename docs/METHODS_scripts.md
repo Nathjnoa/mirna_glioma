@@ -63,9 +63,18 @@ Este documento resume lo que hacen los scripts en `scripts/` del proyecto `mirna
 
 ### GSEA con miEAA (`09_miEAA_GSEA_all_comparisons.R`)
 
-- Extrae miRNAs desde tablas DE (campo `type`) y genera ranking segun `rank_mode` (por defecto `signed_logp`).
-- Ejecuta GSEA via `rbioapi::rba_mieaa_enrich` en categorias predefinidas (miRPathDB, GO, miRTarBase, etc.).
-- Exporta rankings (mature y precursor), top50 por Q-value y lista Q<0.05 por comparacion.
+- Extrae miRNAs desde tablas DE (campo `type`) y genera ranking segun `rank_mode` (por defecto `signed_sqrtF`, i.e., `sign(logFC) * sqrt(F)`;
+  alternativas: `signed_logp`, `signed_F`, `signed_logFC`).
+- Ejecuta GSEA via `rbioapi::rba_mieaa_enrich` en categorias miRPathDB expert (GO BP/MF, KEGG, Reactome) y valida IDs contra `rba_mieaa_cats`.
+- No aplica filtro de significancia en el request (`sig_level=1`); el filtrado se hace post-hoc.
+- Exporta ranking mature, tabla completa sin filtrar (`MiEAA_GSEA_all_*.tsv`), top50 por Q-value y lista Q<0.05 por comparacion.
+
+### Bubble plots de miEAA GSEA (`10_miEAA_GSEA_bubble_plots.R`)
+
+- Lee la tabla completa mas reciente `MiEAA_GSEA_all_*.tsv` por comparacion (run_tag) y detecta columnas de terminos/p-values de forma robusta.
+- Para miRPathDB, selecciona top N por base (GO BP/MF, KEGG, Reactome) y genera un bubble plot 2x2 (PDF/SVG/PNG).
+- Selecciona top N por base miRPathDB y genera un bubble plot 2x2 (PDF/SVG/PNG).
+- Registra logs en `logs/` y copia del log en `results/figures/MiEAA_GSEA_bubble/<run_tag>/`.
 - Genera un resumen global por comparacion.
 
 ## F) Analisis de supervivencia
@@ -191,6 +200,13 @@ Rscript scripts/09_miEAA_GSEA_all_comparisons.R \
   --spec config/de_specs.csv \
   --de_root results/DE \
   --out_root results/tables/MiEAA_GSEA
+
+# 10: bubble plots miEAA
+Rscript scripts/10_miEAA_GSEA_bubble_plots.R \
+  --spec config/de_specs.csv \
+  --in_root results/tables/MiEAA_GSEA \
+  --out_root results/figures/MiEAA_GSEA_bubble \
+  --run_tag A_conservative
 ```
 
 ### Tabla de parametros clave
@@ -204,7 +220,11 @@ Rscript scripts/09_miEAA_GSEA_all_comparisons.R \
 | `fdrs` | Umbrales para figuras QC/heatmaps | `0.05,0.1` |
 | `fdr_thr` | Umbral union DE para supervivencia | `0.1` |
 | `max_features` | Max features en heatmap/QC | `200` (heatmap), `30` (QC) |
-| `rank_mode` | Score para ranking miEAA | `signed_logp` |
+| `rank_mode` | Score para ranking miEAA | `signed_sqrtF` |
+| `mieaa_categories` | Categorias miEAA (default) | `miRPathDB_GO_Biological_process_mature; miRPathDB_GO_Molecular_function_mature; miRPathDB_KEGG_mature; miRPathDB_Reactome_mature` |
+| `mieaa_sig_level` | Filtro en request miEAA | `1` |
+| `mieaa_min_hits` | Min hits para miEAA | `5` |
+| `bubble_n_mirpathdb` | Top N por base (miRPathDB) | `12` |
 | `km_cut` | Regla de corte KM | `median` |
 | `min_group_n` | Minimo por grupo en KM | `5` |
 | `standardize` | HR por 1 SD (Cox) | `FALSE` |
@@ -220,5 +240,5 @@ Rscript scripts/09_miEAA_GSEA_all_comparisons.R \
 - `scripts/06_survival_exploratory_spearman.R`: Spearman expr vs seguimiento en union DE.
 - `scripts/07_survival_cox_univariate.R`: Cox univariado en union DE con FDR.
 - `scripts/08_KM_DE_candidates.R`: KM alto/bajo para candidatos DE.
-- `scripts/09_miEAA_GSEA_all_comparisons.R`: GSEA miEAA desde rankings por comparacion.
-
+- `scripts/09_miEAA_GSEA_all_comparisons.R`: GSEA miEAA desde rankings por comparacion (default `signed_sqrtF`).
+- `scripts/10_miEAA_GSEA_bubble_plots.R`: bubble plots miEAA (miRPathDB 2x2) desde tablas completas.
