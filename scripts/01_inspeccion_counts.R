@@ -163,6 +163,40 @@ cat("Resumen de effective library size (lib.size * norm.factors; edgeR TMM):\n")
 print(summary(eff_lib))
 cat("\n")
 
+# ---- Barplot de library size por muestra (sin normalizar) ----
+bar_fp <- file.path(fig_dir, paste0("04_library_sizes_barplot_", ts, ".png"))
+tryCatch({
+  png(bar_fp, width = 2400, height = 1100, res = 150)
+  barplot(lib_size,
+          main = "Library size por muestra (raw counts)",
+          ylab = "Total counts",
+          las = 2, cex.names = 0.91, cex.axis = 1.17, cex.lab = 1.43,
+          names.arg = colnames(counts_mat))
+  dev.off()
+}, error = function(e) {
+  cat("WARNING: No pude generar barplot de library size:\n")
+  cat("  ", conditionMessage(e), "\n\n")
+  try(dev.off(), silent = TRUE)
+})
+
+# ---- MDS con todas las muestras y etiquetas ----
+mds_fp <- file.path(fig_dir, paste0("05_MDS_all_samples_", ts, ".png"))
+tryCatch({
+  logcpm <- edgeR::cpm(y, log = TRUE, prior.count = 2)
+  mds <- stats::cmdscale(stats::dist(t(logcpm)), k = 2)
+  png(mds_fp, width = 1400, height = 1200, res = 150)
+  plot(mds[, 1], mds[, 2],
+       xlab = "MDS1", ylab = "MDS2",
+       main = "MDS (logCPM) - todas las muestras",
+       pch = 19, cex.axis = 1.17, cex.lab = 1.43)
+  text(mds[, 1], mds[, 2], labels = colnames(counts_mat), pos = 3, cex = 0.6)
+  dev.off()
+}, error = function(e) {
+  cat("WARNING: No pude generar MDS con etiquetas:\n")
+  cat("  ", conditionMessage(e), "\n\n")
+  try(dev.off(), silent = TRUE)
+})
+
 # ---- Fracción de ceros por muestra (solo sobre conteos reales) ----
 zero_frac <- colMeans(counts_mat == 0, na.rm = TRUE)
 cat("Resumen fracción de ceros por muestra:\n")

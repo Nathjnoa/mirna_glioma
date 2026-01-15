@@ -21,6 +21,7 @@ Este documento resume lo que hacen los scripts en `scripts/` del proyecto `mirna
 - Calcula library size con `edgeR::DGEList` y TMM (effective library size).
 - Calcula fraccion de ceros por muestra y conteo total por feature.
 - Genera figuras de inspeccion (histogramas de library size, fraccion de ceros, boxplot log1p).
+- Agrega barplot de library size (raw counts) y MDS con todas las muestras etiquetadas.
 - Guarda un RDS con objetos clave de inspeccion.
 
 ### Normalizacion logCPM y QC multivariado (`02_logcpm_mds.R`)
@@ -262,7 +263,7 @@ Rscript scripts/12_miEAA_GSEA_categories_pvals.R \
 
 ## Resumen por script (trazabilidad)
 
-- `scripts/01_inspeccion_counts.R`: inspeccion de conteos, library size, ceros y figuras basicas.
+- `scripts/01_inspeccion_counts.R`: inspeccion de conteos, library size, ceros, barplot de library size y MDS con etiquetas.
 - `scripts/02_logcpm_mds.R`: logCPM TMM, RLE, densidades, MDS/PCA y exportes.
 - `scripts/03_edgeR_multiDE.R`: DE con edgeR (QL), multiples modos via `spec` o `--vars`.
 - `scripts/03_2_edgeR_multiDE_miRNA_protCoding.R`: DE restringido a miRNA y protein_coding.
