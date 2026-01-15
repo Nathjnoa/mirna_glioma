@@ -25,7 +25,7 @@ in_root <- get_arg("--in_root", file.path("results", "tables", "MiEAA_GSEA"))
 out_root <- get_arg("--out_root", file.path("results", "figures", "MiEAA_GSEA_QC"))
 run_tag <- get_arg("--run_tag", "A_conservative")
 cutoff <- as_num_safe(get_arg("--cutoff", "0.25"))
-also_cutoff_arg <- get_arg("--also_cutoff", "")
+also_cutoff_arg <- get_arg("--also_cutoff", "0.05")
 preset <- get_arg("--preset", "double_col")
 wrap_width <- as.integer(get_arg("--wrap_width", "35"))
 

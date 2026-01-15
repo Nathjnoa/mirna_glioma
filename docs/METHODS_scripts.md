@@ -254,7 +254,7 @@ Rscript scripts/12_miEAA_GSEA_categories_pvals.R \
 | `mieaa_min_hits` | Min hits para miEAA | `5` |
 | `bubble_n_mirpathdb` | Top N por base (miRPathDB) | `12` |
 | `qc_cutoff` | Umbral de significancia para QC | `0.25` |
-| `qc_also_cutoff` | Umbral adicional QC (opcional) | `{NA}` |
+| `qc_also_cutoff` | Umbral adicional QC (opcional) | `0.05` |
 | `categories_wrap_width` | Wrap labels categories p-values | `35` |
 | `km_cut` | Regla de corte KM | `median` |
 | `min_group_n` | Minimo por grupo en KM | `5` |
