@@ -5,7 +5,6 @@ Este documento resume lo que hacen los scripts en `scripts/` del proyecto `mirna
 ## A) Diseno del estudio y datos
 
 - Tipo de datos: matriz de conteos de RNAs con columnas de muestras y columnas de anotacion (p. ej., `id`, `type`, `entrez_id`, `HGNC_symbol`).
-- Origen y criterios de inclusion/exclusion: {ORIGEN_MUESTRAS}, {CRITERIOS_INCLUSION}, {CRITERIOS_EXCLUSION}.
 - Entradas principales (por defecto en los scripts):
   - Conteos: `data/intermediate/Gliomas_all_counts_merged.csv`.
   - Metadatos: `data/intermediate/Metadatos_gliomas_verificados.csv`.
