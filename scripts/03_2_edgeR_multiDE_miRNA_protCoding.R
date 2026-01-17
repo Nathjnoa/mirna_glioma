@@ -301,8 +301,29 @@ run_one <- function(row) {
   event_var <- norm_string(row$event_var)
   collapse_map_str <- norm_string(row$collapse_map)
   exclude_rule <- norm_string(row$exclude_rule)
+  exclude_samples_str <- ""
+  if ("exclude_samples" %in% names(row)) {
+    exclude_samples_str <- norm_string(row$exclude_samples)
+  }
 
-  if (!(var_key %in% colnames(meta_base))) {
+  meta_use <- meta_base
+  counts_use <- counts_mat
+  if (nzchar(exclude_samples_str)) {
+    exclude_ids <- trimws(unlist(strsplit(exclude_samples_str, "[,;| ]+")))
+    exclude_ids <- exclude_ids[nzchar(exclude_ids)]
+    if (length(exclude_ids) > 0) {
+      excl_mask <- meta_use$id %in% exclude_ids
+      if (any(excl_mask)) {
+        cat("Excluyendo muestras (spec):", paste(meta_use$id[excl_mask], collapse = ", "), "\n")
+        meta_use <- meta_use[!excl_mask, , drop = FALSE]
+        counts_use <- counts_use[, !excl_mask, drop = FALSE]
+      } else {
+        cat("WARNING: exclude_samples no coincide con meta$id\n")
+      }
+    }
+  }
+
+  if (!(var_key %in% colnames(meta_use))) {
     cat("SKIP:", analysis_id, "-> var no existe:", var_key, "\n\n"); return(NULL)
   }
 
@@ -310,18 +331,18 @@ run_one <- function(row) {
   analysis_dir <- file.path(outdir, analysis_fs)
   dir.create(analysis_dir, showWarnings = FALSE, recursive = TRUE)
 
-  keep_mask <- rep(TRUE, nrow(meta_base))
+  keep_mask <- rep(TRUE, nrow(meta_use))
   group <- NULL
 
   if (mode == "continuous") {
-    x <- as_num_safe(meta_base[[var_key]])
+    x <- as_num_safe(meta_use[[var_key]])
     keep_mask <- is.finite(x)
     if (sum(keep_mask) < 8) {
       cat("SKIP:", analysis_id, "-> continuous con pocas muestras.\n\n"); return(NULL)
     }
     scale_val <- if (is.finite(cut_val) && cut_val != 0) cut_val else 1
     x_scaled <- x[keep_mask] / scale_val
-    counts_sub <- counts_mat[, keep_mask, drop = FALSE]
+    counts_sub <- counts_use[, keep_mask, drop = FALSE]
 
     y <- DGEList(counts_sub)
     y <- calcNormFactors(y, method = "TMM")
@@ -372,7 +393,7 @@ run_one <- function(row) {
   }
 
   # ---- non-continuous: build group ----
-  v <- meta_base[[var_key]]
+  v <- meta_use[[var_key]]
 
   if (mode == "as_is") {
     g <- as.character(v); g[trimws(g)==""] <- NA
@@ -416,11 +437,11 @@ run_one <- function(row) {
     group <- factor(g)
 
   } else if (mode == "survival_cut") {
-    if (!nzchar(event_var) || !(event_var %in% colnames(meta_base))) {
+    if (!nzchar(event_var) || !(event_var %in% colnames(meta_use))) {
       cat("SKIP:", analysis_id, "-> event_var inválido.\n\n"); return(NULL)
     }
     time <- as_num_safe(v)
-    ev <- as_num_safe(meta_base[[event_var]])
+    ev <- as_num_safe(meta_use[[event_var]])
     if (!is.finite(cut_val)) { cat("SKIP:", analysis_id, "-> cut inválido.\n\n"); return(NULL) }
     g <- rep(NA_character_, length(time))
     g[is.finite(time) & is.finite(ev) & ev==1 & time < cut_val] <- ref_label
@@ -445,7 +466,7 @@ run_one <- function(row) {
   tab <- table(group)
   if (any(tab < 2)) { cat("SKIP:", analysis_id, "-> algún grupo <2.\n\n"); return(NULL) }
 
-  counts_sub <- counts_mat[, keep_mask, drop = FALSE]
+  counts_sub <- counts_use[, keep_mask, drop = FALSE]
 
   # ---- edgeR QL ----
   y <- DGEList(counts_sub, group = group)

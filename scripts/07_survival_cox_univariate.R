@@ -35,6 +35,7 @@ counts_fp <- get_arg("--counts", file.path("data","intermediate","Gliomas_all_co
 meta_fp   <- get_arg("--meta",   file.path("data","intermediate","Metadatos_gliomas_verificados.csv"))
 spec_fp   <- get_arg("--spec",   file.path("config","de_specs.csv"))
 de_dir    <- get_arg("--de_dir", file.path("results","DE"))
+exclude_samples_arg <- get_arg("--exclude_samples", "")
 
 drop_re   <- get_arg("--drop_regex", "^A")
 min_lib   <- as.numeric(get_arg("--min_libsize", "100000"))
@@ -64,6 +65,7 @@ cat("Counts:", counts_fp, "\n")
 cat("Meta:", meta_fp, "\n")
 cat("Spec:", spec_fp, "\n")
 cat("DE dir:", de_dir, "\n")
+cat("exclude_samples:", ifelse(nzchar(exclude_samples_arg), exclude_samples_arg, "NA"), "\n")
 cat("drop_regex:", drop_re, "\n")
 cat("min_libsize:", min_lib, "\n")
 cat("prior_count:", prior_cnt, "\n")
@@ -94,6 +96,15 @@ if (anyDuplicated(spec$analysis_id)) {
   stop("analysis_id duplicados en spec: ", paste(dups, collapse=", "))
 }
 cat("Analyses en spec:", nrow(spec), "\n\n")
+
+exclude_samples_str <- exclude_samples_arg
+if (!nzchar(exclude_samples_str) && "exclude_samples" %in% colnames(spec)) {
+  vals <- trimws(as.character(spec$exclude_samples))
+  vals <- vals[nzchar(vals)]
+  if (length(vals) > 0) {
+    exclude_samples_str <- paste(unique(vals), collapse = ",")
+  }
+}
 
 # ---- read DE tables and union of features ----
 union_feats <- character(0)
@@ -213,6 +224,23 @@ if (length(missing_in_meta) > 0) {
 }
 meta2 <- meta[match(samples_final, meta_ids), , drop = FALSE]
 stopifnot(all(as.character(meta2$id) == samples_final))
+
+# excluir muestras específicas (si aplica)
+if (nzchar(exclude_samples_str)) {
+  exclude_ids <- trimws(unlist(strsplit(exclude_samples_str, "[,;| ]+")))
+  exclude_ids <- exclude_ids[nzchar(exclude_ids)]
+  if (length(exclude_ids) > 0) {
+    excl_mask <- meta2$id %in% exclude_ids
+    if (any(excl_mask)) {
+      cat("Excluyendo muestras:", paste(meta2$id[excl_mask], collapse = ", "), "\n")
+      keep <- !excl_mask
+      meta2 <- meta2[keep, , drop = FALSE]
+      counts_mat <- counts_mat[, keep, drop = FALSE]
+    } else {
+      cat("WARNING: exclude_samples no coincide con meta$id\n")
+    }
+  }
+}
 
 time_m <- as_num_safe(meta2[[time_var]])
 event_m <- as_num_safe(meta2[[event_var]])

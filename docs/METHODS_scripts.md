@@ -95,21 +95,22 @@ Este documento resume lo que hacen los scripts en `scripts/` del proyecto `mirna
 ### Exploratorio Spearman (`06_survival_exploratory_spearman.R`)
 
 - Construye la union de features con FDR < umbral en todas las comparaciones DE.
-- Calcula correlacion Spearman entre expresion (logCPM) y tiempo de seguimiento.
-- Reporta resultados para todas las muestras y solo eventos.
+- Calcula correlacion Spearman entre expresion (logCPM) y tiempo de seguimiento (`MESES_SEGUIMIENTO_`).
+- Reporta dos metricas: (i) Spearman en todas las muestras (`rho_all`, `p_all`, `n_all`), que incluye eventos y censura, y (ii) Spearman solo en eventos (`rho_event`, `p_event`, `n_event`) restringido a `MUERTE=1` para ver la tendencia dentro de los casos con evento.
+- En las figuras por feature: puntos llenos = eventos (MUERTE=1), circulos vacios = censura (MUERTE=0), linea negra = ajuste lineal (LM) solo visual y linea punteada = suavizado LOESS para tendencia no lineal (ambas solo ilustrativas).
 - Genera tabla y un set limitado de figuras.
 
 ### Cox univariado (`07_survival_cox_univariate.R`)
 
 - Usa la union de features DE con FDR < umbral.
-- Ajusta modelos de Cox univariados por feature con `survival::coxph`.
+- Ajusta modelos de Cox univariados por feature con `survival::coxph` usando tiempo (`MESES_SEGUIMIENTO_`) y evento (`MUERTE`).
 - Opcion de estandarizar la expresion (HR por 1 SD) o usar logCPM directo.
 - Reporta HR, IC95%, p, FDR y tablas con membership.
 
 ### Kaplan-Meier de candidatos DE (`08_KM_DE_candidates.R`)
 
 - Selecciona candidatos DE (FDR < umbral) de todas las comparaciones.
-- Divide en alta vs baja expresion (mediana o cuantiles extremos) y evalua log-rank.
+- Divide en alta vs baja expresion (mediana o cuantiles extremos) y evalua log-rank con tiempo (`MESES_SEGUIMIENTO_`) y evento (`MUERTE`).
 - Genera PDF con curvas KM y tabla resumen con p-values y FDR.
 
 ## G) Visualizacion y QC de DE

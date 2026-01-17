@@ -583,9 +583,29 @@ run_spec_analysis <- function(spec_row) {
   collapse_map_str <- norm_string(spec_row$collapse_map)
   exclude_rule <- norm_string(spec_row$exclude_rule)
   event_var <- norm_string(spec_row$event_var)
+  exclude_samples_str <- ""
+  if ("exclude_samples" %in% names(spec_row)) {
+    exclude_samples_str <- norm_string(spec_row$exclude_samples)
+  }
 
   analysis_fs <- safe_name(analysis_id)
-  n_before <- nrow(meta_base)
+  meta_use <- meta_base
+  counts_use <- counts_mat
+  if (nzchar(exclude_samples_str)) {
+    exclude_ids <- trimws(unlist(strsplit(exclude_samples_str, "[,;| ]+")))
+    exclude_ids <- exclude_ids[nzchar(exclude_ids)]
+    if (length(exclude_ids) > 0) {
+      excl_mask <- meta_use$id %in% exclude_ids
+      if (any(excl_mask)) {
+        cat("Excluyendo muestras (spec):", paste(meta_use$id[excl_mask], collapse = ", "), "\n")
+        meta_use <- meta_use[!excl_mask, , drop = FALSE]
+        counts_use <- counts_use[, !excl_mask, drop = FALSE]
+      } else {
+        cat("WARNING: exclude_samples no coincide con meta$id\n")
+      }
+    }
+  }
+  n_before <- nrow(meta_use)
 
   cat("============================================\n")
   cat("[SPEC] analysis_id=", analysis_id,
@@ -599,7 +619,7 @@ run_spec_analysis <- function(spec_row) {
       " exclude_rule=", ifelse(nzchar(exclude_rule), exclude_rule, "NA"),
       "\n", sep = "")
 
-  if (!(var_key %in% colnames(meta_base))) {
+  if (!(var_key %in% colnames(meta_use))) {
     cat("SKIP:", analysis_id, "-> variable no existe en metadata:", var_key, "\n\n")
     return(NULL)
   }
@@ -609,16 +629,16 @@ run_spec_analysis <- function(spec_row) {
   }
 
   group <- NULL
-  keep_mask <- rep(TRUE, nrow(meta_base))
+  keep_mask <- rep(TRUE, nrow(meta_use))
 
   if (identical(mode, "continuous")) {
-    x_num <- safe_numeric(meta_base[[var_key]])
+    x_num <- safe_numeric(meta_use[[var_key]])
     keep_mask <- !is.na(x_num)
     if (sum(keep_mask) < 3) {
       cat("SKIP:", analysis_id, "-> continuous sin suficientes muestras válidas.\n\n")
       return(NULL)
     }
-    counts_sub <- counts_mat[, keep_mask, drop = FALSE]
+    counts_sub <- counts_use[, keep_mask, drop = FALSE]
     x_scaled <- x_num[keep_mask]
     scale_val <- if (is.finite(cut_val) && cut_val != 0) cut_val else 1
     x_scaled <- x_scaled / scale_val
@@ -651,7 +671,7 @@ run_spec_analysis <- function(spec_row) {
       cat("SKIP:", analysis_id, "-> collapse_map (rangos) vacío para range_vs.\n\n")
       return(NULL)
     }
-    x_num <- as_numeric_robust(meta_base[[var_key]])
+    x_num <- as_numeric_robust(meta_use[[var_key]])
     mapped <- rep(NA_character_, length(x_num))
     for (rng in ranges) {
       hit <- !is.na(x_num) & x_num >= rng$min & x_num <= rng$max
@@ -677,8 +697,8 @@ run_spec_analysis <- function(spec_row) {
       cat("SKIP:", analysis_id, "-> range_vs algún nivel <2 muestras.\n\n")
       return(NULL)
     }
-    counts_sub <- counts_mat[, keep_mask, drop = FALSE]
-    meta_sub <- meta_base[keep_mask, , drop = FALSE]
+    counts_sub <- counts_use[, keep_mask, drop = FALSE]
+    meta_sub <- meta_use[keep_mask, , drop = FALSE]
     names(group) <- colnames(counts_sub)
 
     res <- run_edgeR_binary(
@@ -710,7 +730,7 @@ run_spec_analysis <- function(spec_row) {
       cat("SKIP:", analysis_id, "-> debes indicar case y ref para as_is.\n\n")
       return(NULL)
     }
-    v <- meta_base[[var_key]]
+    v <- meta_use[[var_key]]
     group_raw <- as.factor(v)
     keep_mask <- !is.na(group_raw) & trimws(as.character(group_raw)) != ""
     group_chr <- as.character(group_raw)
@@ -730,7 +750,7 @@ run_spec_analysis <- function(spec_row) {
       cat("SKIP:", analysis_id, "-> debes indicar case y ref para binary_cut.\n\n")
       return(NULL)
     }
-    x <- safe_numeric(meta_base[[var_key]])
+    x <- safe_numeric(meta_use[[var_key]])
     keep_mask <- !is.na(x)
     if (cut_type == "gt") {
       group_chr <- ifelse(x > cut_val, case_label, ref_label)
@@ -749,7 +769,7 @@ run_spec_analysis <- function(spec_row) {
       cat("SKIP:", analysis_id, "-> collapse_map vacío o malformado.\n\n")
       return(NULL)
     }
-    v <- as.character(meta_base[[var_key]])
+    v <- as.character(meta_use[[var_key]])
     mapped <- rep(NA_character_, length(v))
     for (nm in names(cmap)) {
       mapped[!is.na(v) & v == nm] <- cmap[[nm]]
@@ -767,12 +787,12 @@ run_spec_analysis <- function(spec_row) {
       cat("SKIP:", analysis_id, "-> cut no es numérico para survival_cut.\n\n")
       return(NULL)
     }
-    if (!(event_var %in% colnames(meta_base))) {
+    if (!(event_var %in% colnames(meta_use))) {
       cat("SKIP:", analysis_id, "-> event_var no existe en metadata: ", event_var, "\n\n", sep = "")
       return(NULL)
     }
-    time <- safe_numeric(meta_base[[var_key]])
-    event <- safe_numeric(meta_base[[event_var]])
+    time <- safe_numeric(meta_use[[var_key]])
+    event <- safe_numeric(meta_use[[event_var]])
     g <- rep(NA_character_, length(time))
     lt_idx <- which(!is.na(time) & !is.na(event) & time < cut_val & event == 1)
     ge_idx <- which(!is.na(time) & time >= cut_val)
@@ -812,8 +832,8 @@ run_spec_analysis <- function(spec_row) {
     return(NULL)
   }
 
-  counts_sub <- counts_mat[, keep_mask, drop = FALSE]
-  meta_sub <- meta_base[keep_mask, , drop = FALSE]
+  counts_sub <- counts_use[, keep_mask, drop = FALSE]
+  meta_sub <- meta_use[keep_mask, , drop = FALSE]
   if (ncol(counts_sub) != length(group)) {
     stop("Inconsistencia interna: counts_sub y group longitud distinta.")
   }
