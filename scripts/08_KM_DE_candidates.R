@@ -364,15 +364,25 @@ for (fid in candidates_in) {
       legend.labs = c(lab_low, lab_high),
       title = main_txt
     )))
-    suppressMessages(suppressWarnings({
-      grid::grid.newpage()
-      print(gp)
-    }))
+    render_plot <- function() {
+      suppressMessages(suppressWarnings({
+        grid::grid.newpage()
+        print(gp)
+      }))
+    }
   } else {
-    plot(sf, main = main_txt, xlab = time_var, ylab = "Survival probability", lwd = 2)
-    legend("bottomleft", legend = c(lab_low, lab_high), lwd = 2, bty = "n")
-    mtext(paste0("log-rank p=", format(p_lr, digits=3)), side = 3, line = 0.2, cex = 0.9)
+    render_plot <- function() {
+      plot(sf, main = main_txt, xlab = time_var, ylab = "Survival probability", lwd = 2)
+      legend("bottomleft", legend = c(lab_low, lab_high), lwd = 2, bty = "n")
+      mtext(paste0("log-rank p=", format(p_lr, digits=3)), side = 3, line = 0.2, cex = 0.9)
+    }
   }
+  render_plot()
+
+  png_fp <- file.path(fig_dir, paste0("KM_", safe_name(fid), "_", ts, ".png"))
+  png(png_fp, width = 1600, height = 1200, res = 150)
+  render_plot()
+  dev.off()
 
   km_rows[[fid]] <- data.frame(
     feature_id = fid,

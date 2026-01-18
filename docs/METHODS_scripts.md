@@ -81,12 +81,12 @@ Este documento resume lo que hacen los scripts en `scripts/` del proyecto `mirna
 - Lee la tabla completa mas reciente `MiEAA_GSEA_all_*.tsv` por comparacion; si no existe, usa `MiEAA_GSEA_top50_*.tsv` con warning.
 - Detecta columna de significancia (P-adjusted/Q-value/P-value) y direccion (enrichment).
 - Genera barplots apilados por base y direccion para un cutoff (y opcionalmente un segundo cutoff).
-- Exporta PDF/SVG y registra logs en `logs/` y copia en `results/figures/MiEAA_GSEA_QC/<run_tag>/`.
+- Exporta PDF/SVG/PNG y registra logs en `logs/` y copia en `results/figures/MiEAA_GSEA_QC/<run_tag>/`.
 
 ### Categories p-values miEAA (`12_miEAA_GSEA_categories_pvals.R`)
 
 - Genera distribuciones de -log10(Q-value) y -log10(P-adjusted) por categoria (boxplot + jitter).
-- Ordena categorias por mediana de -log10(metric) y exporta PDF/SVG.
+- Ordena categorias por mediana de -log10(metric) y exporta PDF/SVG/PNG.
 - Usa `MiEAA_GSEA_all_*.tsv` si existe; si no, `MiEAA_GSEA_top50_*.tsv` con warning.
 - Registra logs en `logs/` y copia en `results/figures/MiEAA_GSEA_categories_pvals/<run_tag>/`.
 
@@ -111,7 +111,7 @@ Este documento resume lo que hacen los scripts en `scripts/` del proyecto `mirna
 
 - Selecciona candidatos DE (FDR < umbral) de todas las comparaciones.
 - Divide en alta vs baja expresion (mediana o cuantiles extremos) y evalua log-rank con tiempo (`MESES_SEGUIMIENTO_`) y evento (`MUERTE`).
-- Genera PDF con curvas KM y tabla resumen con p-values y FDR.
+- Genera PDF con curvas KM, PNGs por feature y tabla resumen con p-values y FDR.
 
 ## G) Visualizacion y QC de DE
 

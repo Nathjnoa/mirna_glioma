@@ -152,6 +152,11 @@ save_plot <- function(plot, out_base) {
            units = "mm", dpi = 300, limitsize = FALSE, device = svg_dev),
     error = function(e) warning("No se pudo crear SVG: ", conditionMessage(e))
   )
+  tryCatch(
+    ggsave(paste0(out_base, ".png"), plot, width = width_mm, height = height_mm,
+           units = "mm", dpi = 300, limitsize = FALSE, device = "png"),
+    error = function(e) warning("No se pudo crear PNG: ", conditionMessage(e))
+  )
 }
 
 if (!file.exists(spec_fp)) stop("No existe spec: ", spec_fp)

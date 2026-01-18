@@ -31,8 +31,8 @@ conda env create -f env/environment.yml
 ## Reproducibilidad
 - Cada script genera logs con timestamp en `logs/`.
 - Los bubble plots copian el log en `results/figures/MiEAA_GSEA_bubble/<run_tag>/`.
-- Los barplots QC copian el log en `results/figures/MiEAA_GSEA_QC/<run_tag>/`.
-- Categories p-values copian el log en `results/figures/MiEAA_GSEA_categories_pvals/<run_tag>/`.
+- Los barplots QC exportan PDF/SVG/PNG y copian el log en `results/figures/MiEAA_GSEA_QC/<run_tag>/`.
+- Categories p-values exportan PDF/SVG/PNG y copian el log en `results/figures/MiEAA_GSEA_categories_pvals/<run_tag>/`.
 - Las salidas se escriben en `results/` y `data/processed/`.
 
 ## Licencia
