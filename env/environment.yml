@@ -1,18 +1,49 @@
-name: proyecto_env
+# miRNA Glioma Project
+# Pipeline de expresión diferencial de miRNA, supervivencia y enriquecimiento miEAA
+#
+# Ambiente recomendado: omics-R (ya instalado)
+# Activar con: conda activate omics-R
+#
+# Si necesitas crear un ambiente aislado:
+#   conda env create -f env/environment.yml
+#   conda activate mirna_glioma_env
+
+name: mirna_glioma_env
 channels:
   - conda-forge
   - bioconda
+  - defaults
+
 dependencies:
-  - python=3.11
-  - r-base
+  # Base R
+  - r-base>=4.4
   - r-tidyverse
-  - bioconductor-deseq2
+  - r-data.table
+
+  # Expresión diferencial
   - bioconductor-edger
   - bioconductor-limma
-  - numpy
-  - pandas
-  - scipy
-  - scikit-learn
-  - matplotlib
-  - seaborn
-  - biopython
+
+  # Visualización
+  - r-ggplot2
+  - r-cowplot
+  - r-ggrepel
+  - r-pheatmap
+  - r-rcolorbrewer
+  - r-viridis
+  - r-scales
+
+  # Supervivencia
+  - r-survival
+  - r-survminer
+
+  # I/O y utilidades
+  - r-openxlsx
+  - r-readxl
+  - r-optparse
+  - r-yaml
+  - r-futile.logger
+
+# Paquetes adicionales (instalar via R):
+#   BiocManager::install(c("ComplexHeatmap", "circlize"))
+#   install.packages("rbioapi")  # Para miEAA GSEA
