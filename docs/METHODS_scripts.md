@@ -1,191 +1,400 @@
-# Metodos computacionales (scripts)
+# Computational Methods
 
-Este documento resume lo que hacen los scripts en `scripts/` del proyecto `mirna_glioma`. El enfoque es de metodos reproducibles: se describen entradas, filtros, analisis, salidas y supuestos. Donde faltan detalles, se usan placeholders.
+This document describes the computational methods implemented in the `scripts/` directory of the `mirna_glioma` project. The focus is on reproducibility: we detail inputs, filtering criteria, statistical analyses, outputs, and assumptions. The pipeline comprises quality control, differential expression analysis, survival modeling, and functional enrichment.
 
-## A) Diseno del estudio y datos
+---
 
-- Tipo de datos: matriz de conteos de RNAs con columnas de muestras y columnas de anotacion (p. ej., `id`, `type`, `entrez_id`, `HGNC_symbol`).
-- Entradas principales (por defecto en los scripts):
-  - Conteos: `data/intermediate/Gliomas_all_counts_merged.csv`.
-  - Metadatos: `data/intermediate/Metadatos_gliomas_verificados.csv`.
-- Filtrado de muestras post-mortem: se excluyen columnas de muestras cuyo nombre empieza con `A` (regex `^A`).
+## A) Study Design and Data
 
-## B) Preprocesamiento y QC
+### Data Sources
 
-### Inspeccion inicial de conteos (`01_inspeccion_counts.R`)
+The analysis uses small RNA sequencing (RNA-seq) count data from glioma tumor samples. Input files include:
 
-- Lee la matriz de conteos, detecta columnas de anotacion y construye `counts_mat`.
-- Excluye muestras con prefijo `A`.
-- Coercion robusta a numerico y chequeos de integridad (NA, negativos, no enteros).
-- Calcula library size con `edgeR::DGEList` y TMM (effective library size).
-- Calcula fraccion de ceros por muestra y conteo total por feature.
-- Genera figuras de inspeccion (histogramas de library size, fraccion de ceros, boxplot log1p).
-- Agrega barplot de library size (raw counts) y MDS con todas las muestras etiquetadas.
-- Guarda un RDS con objetos clave de inspeccion.
+- **Count matrix**: `data/intermediate/Gliomas_all_counts_merged.csv` containing raw read counts with annotation columns (`id`, `type`, `entrez_id`, `HGNC_symbol`).
+- **Sample metadata**: `data/intermediate/Metadatos_gliomas_verificados.csv` containing clinical and demographic variables.
 
-### Normalizacion logCPM y QC multivariado (`02_logcpm_mds.R`)
+### Sample Selection
 
-- Filtra muestras con `library_size < 100000` y features con:
-  - conteo total > 0,
-  - varianza > 0,
-  - suma de conteos >= 10.
-- Calcula logCPM pre y post TMM (edgeR) con `prior.count=2`.
-- Genera RLE pre/post, densidades pre/post, y barplots de library size.
-- Calcula MDS (limma) sobre logCPM post TMM y exporta coordenadas.
-- Exporta matriz `logCPM_TMM_*.csv` y tablas de library sizes.
+Post-mortem control samples were excluded from the analysis. Samples with column names beginning with `A` (matching regex `^A`) are systematically removed during data loading to ensure analysis focuses on tumor specimens.
 
-## C) Analisis estadistico / modelado
+---
 
-### Diferencial de expresion multicomparacion (`03_edgeR_multiDE.R`)
+## B) Preprocessing and Quality Control
 
-- Alinea `counts_mat` con `metadata` y exporta bases filtradas.
-- Permite ejecucion por lista de variables (`--vars`) o por `spec` (`config/de_specs.csv`).
-- Modos soportados (segun `spec`):
-  - `as_is`, `binary_cut`, `collapse_levels`, `range_vs`, `survival_cut`, `continuous`.
-- Usa `edgeR` con normalizacion TMM, `filterByExpr`, y modelo QL (`glmQLFit`/`glmQLFTest`).
-- Para factores multinivel produce omnibus y comparaciones vs referencia; para binarios produce contraste case vs ref.
-- Comparaciones binarias adicionales via `collapse_levels` incluyen P53_(TP53), SINAPTOFISINA y OLIG_2 (1 vs 0), excluyendo nivel 2 con `drop_unmapped`.
-- Salidas por comparacion: tablas completas, FDR<0.05, FDR<0.1, MD plots y volcano plots.
-- Resumen QC por comparacion y resumen global.
+### Initial Count Inspection (Script 01)
 
-### Diferencial de expresion restringido a miRNA/protein_coding (`03_2_edgeR_multiDE_miRNA_protCoding.R`)
+**Script**: `01_inspeccion_counts.R`
 
-- Filtra features por biotipo (`type`) manteniendo `mirna` y `protein_coding`.
-- Usa `spec` para definir comparaciones (mismos modos que arriba).
-- Ejecuta `edgeR` QL con TMM y `filterByExpr`.
-- Salidas y resumen global similares a `03_edgeR_multiDE.R`.
+Quality assessment of the raw count matrix includes:
 
-## D) Correccion por multiples pruebas
+1. **Data structure validation**: Detection of annotation columns and construction of a numeric count matrix.
+2. **Sample exclusion**: Removal of post-mortem control samples (prefix `A`).
+3. **Data integrity checks**: Verification for missing values (NA), negative counts, and non-integer entries.
+4. **Library size calculation**: Using edgeR's `DGEList` with TMM (trimmed mean of M-values) normalization to compute effective library sizes.
+5. **Zero fraction analysis**: Calculation of the proportion of zero counts per sample and total counts per feature.
 
-- Ajuste de FDR con Benjamini-Hochberg (BH) en los analisis de DE y en analisis exploratorios de supervivencia.
-- Umbrales reportados frecuentemente: 0.05 y 0.10 (segun tablas y figuras generadas).
+**Outputs**: Inspection figures (library size histograms, zero fraction distributions, log1p boxplots, barplots, and MDS plots) and an RDS file containing key inspection objects.
 
-## E) Analisis funcional / enriquecimiento
+### Normalization and Multivariate QC (Script 02)
 
-### GSEA con miEAA (`09_miEAA_GSEA_all_comparisons.R`)
+**Script**: `02_logcpm_mds.R`
 
-- Extrae miRNAs desde tablas DE (campo `type`) y genera ranking segun `rank_mode` (por defecto `signed_sqrtF`, i.e., `sign(logFC) * sqrt(F)`;
-  alternativas: `signed_logp`, `signed_F`, `signed_logFC`).
-- Ejecuta GSEA via `rbioapi::rba_mieaa_enrich` en categorias miRPathDB expert (GO BP/MF, KEGG, Reactome) y valida IDs contra `rba_mieaa_cats`.
-- No aplica filtro de significancia en el request (`sig_level=1`); el filtrado se hace post-hoc.
-- Exporta ranking mature, tabla completa sin filtrar (`MiEAA_GSEA_all_*.tsv`), top50 por Q-value y lista Q<0.05 por comparacion.
+Normalization and quality visualization include:
 
-### Bubble plots de miEAA GSEA (`10_miEAA_GSEA_bubble_plots.R`)
+1. **Sample filtering**: Exclusion of samples with library size < 100,000 reads.
+2. **Feature filtering**: Retention of features with:
+   - Total count > 0 across samples
+   - Non-zero variance
+   - Sum of counts >= 10
+3. **Normalization**: Calculation of log-transformed counts per million (logCPM) before and after TMM normalization (edgeR) using a prior count of 2.
+4. **Quality visualization**: Generation of RLE (relative log expression) plots, density distributions, and library size barplots.
+5. **Dimensionality reduction**: MDS (multidimensional scaling) analysis using limma with coordinate export.
 
-- Lee la tabla completa mas reciente `MiEAA_GSEA_all_*.tsv` por comparacion (run_tag) y detecta columnas de terminos/p-values de forma robusta (prioridad: P-adjusted > Q-value > P-value).
-- Para miRPathDB, selecciona top N por base (GO BP/MF, KEGG, Reactome) y genera un bubble plot 2x2 (PDF/SVG/PNG).
-- Registra logs en `logs/` y copia del log en `results/figures/MiEAA_GSEA_bubble/<run_tag>/`.
+**Outputs**: Normalized expression matrix (`logCPM_TMM_*.csv`) and library size tables.
 
-### QC barplots de miEAA GSEA (`11_miEAA_GSEA_barplots.R`)
+---
 
-- Lee la tabla completa mas reciente `MiEAA_GSEA_all_*.tsv` por comparacion; si no existe, usa `MiEAA_GSEA_top50_*.tsv` con warning.
-- Detecta columna de significancia (P-adjusted/Q-value/P-value) y direccion (enrichment).
-- Genera barplots apilados por base y direccion para un cutoff (y opcionalmente un segundo cutoff).
-- Exporta PDF/SVG/PNG y registra logs en `logs/` y copia en `results/figures/MiEAA_GSEA_QC/<run_tag>/`.
+## C) Differential Expression Analysis
 
-### Categories p-values miEAA (`12_miEAA_GSEA_categories_pvals.R`)
+### Multi-comparison Differential Expression (Script 03)
 
-- Genera distribuciones de -log10(Q-value) y -log10(P-adjusted) por categoria (boxplot + jitter).
-- Ordena categorias por mediana de -log10(metric) y exporta PDF/SVG/PNG.
-- Usa `MiEAA_GSEA_all_*.tsv` si existe; si no, `MiEAA_GSEA_top50_*.tsv` con warning.
-- Registra logs en `logs/` y copia en `results/figures/MiEAA_GSEA_categories_pvals/<run_tag>/`.
+**Script**: `03_edgeR_multiDE.R`
 
-## F) Analisis de supervivencia
+Differential expression analysis uses the edgeR quasi-likelihood (QL) framework:
 
-### Exploratorio Spearman (`06_survival_exploratory_spearman.R`)
+1. **Sample alignment**: Matching between count matrix and metadata, with export of filtered datasets.
+2. **Comparison specification**: Defined via `--vars` parameter or through `config/de_specs.csv`.
+3. **Supported comparison modes**:
+   - `as_is`: Variables used directly without transformation
+   - `binary_cut`: Binarization by threshold
+   - `collapse_levels`: Grouping of factor levels
+   - `range_vs`: Comparison of extreme groups (e.g., quartiles)
+   - `survival_cut`: Binarization based on survival outcomes
+   - `continuous`: Continuous covariate analysis
+4. **Statistical framework**: TMM normalization, `filterByExpr` for low-expression filtering, quasi-likelihood modeling with `glmQLFit` and `glmQLFTest`.
+5. **Multiple testing**: For multinomial factors, omnibus tests and pairwise comparisons against the reference level; for binary comparisons, direct case vs. reference contrasts.
 
-- Construye la union de features con FDR < umbral en todas las comparaciones DE.
-- Calcula correlacion Spearman entre expresion (logCPM) y tiempo de seguimiento (`MESES_SEGUIMIENTO_`).
-- Reporta dos metricas: (i) Spearman en todas las muestras (`rho_all`, `p_all`, `n_all`), que incluye eventos y censura, y (ii) Spearman solo en eventos (`rho_event`, `p_event`, `n_event`) restringido a `MUERTE=1` para ver la tendencia dentro de los casos con evento.
-- En las figuras por feature: puntos llenos = eventos (MUERTE=1), circulos vacios = censura (MUERTE=0), linea negra = ajuste lineal (LM) solo visual y linea punteada = suavizado LOESS para tendencia no lineal (ambas solo ilustrativas).
-- Genera tabla y un set limitado de figuras.
+**Outputs per comparison**: Complete results tables, FDR < 0.05 and FDR < 0.10 filtered tables, MD plots, and volcano plots.
 
-### Cox univariado (`07_survival_cox_univariate.R`)
+### Biotype-restricted Differential Expression (Script 03_2)
 
-- Usa la union de features DE con FDR < umbral.
-- Ajusta modelos de Cox univariados por feature con `survival::coxph` usando tiempo (`MESES_SEGUIMIENTO_`) y evento (`MUERTE`).
-- Opcion de estandarizar la expresion (HR por 1 SD) o usar logCPM directo.
-- Reporta HR, IC95%, p, FDR y tablas con membership.
+**Script**: `03_2_edgeR_multiDE_miRNA_protCoding.R`
 
-### Kaplan-Meier de candidatos DE (`08_KM_DE_candidates.R`)
+A variant analysis restricted to biologically relevant feature types:
 
-- Selecciona candidatos DE (FDR < umbral) de todas las comparaciones.
-- Divide en alta vs baja expresion (mediana o cuantiles extremos) y evalua log-rank con tiempo (`MESES_SEGUIMIENTO_`) y evento (`MUERTE`).
-- Genera PDF con curvas KM, PNGs por feature y tabla resumen con p-values y FDR.
+1. **Feature filtering**: Selection of features annotated as `mirna` or `protein_coding` in the `type` column.
+2. **Analysis pipeline**: Identical quasi-likelihood framework as script 03.
 
-## G) Visualizacion y QC de DE
+This restriction focuses the analysis on regulatory small RNAs and their potential protein-coding targets.
 
-### Heatmaps de RNAs significativos (`04_heatmaps_sigRNAs.R`)
+---
 
-- Toma la tabla DE mas reciente por comparacion y selecciona features con FDR < umbral.
-- Usa logCPM (TMM) y transforma a Z-score por feature.
-- Genera heatmaps con `ComplexHeatmap` y guarda listas de features.
+## D) Multiple Testing Correction
 
-### QC por feature significativo (`05_deg_qc_plots.R`)
+False discovery rate (FDR) correction is applied using the Benjamini-Hochberg (BH) procedure throughout the pipeline:
 
-- Genera box/jitter (categoricos) o scatter (continuos) para top features por FDR.
-- Produce PNGs y PDF opcional con resumen de QC visual.
+- Differential expression analyses
+- Survival association tests
+- Pathway enrichment analyses
 
-## H) Software y entorno computacional
+Standard significance thresholds of FDR < 0.05 (stringent) and FDR < 0.10 (exploratory) are applied depending on the analytical context.
 
-- Lenguaje principal: R ({R_VERSION}).
-- Paquetes clave: edgeR ({EDGER_VERSION}), limma ({LIMMA_VERSION}), data.table ({DATATABLE_VERSION}),
-  ComplexHeatmap ({COMPLEXHEATMAP_VERSION}), circlize ({CIRCLIZE_VERSION}), survival ({SURVIVAL_VERSION}),
-  survminer ({SURVMINER_VERSION, opcional}), rbioapi ({RBIOAPI_VERSION}).
-- Sistema operativo / entorno: {OS_DISTRIBUCION}, {HARDWARE_RESUMEN}.
+---
 
-## Reproducibilidad
+## E) Functional Enrichment Analysis
 
-- Los scripts generan logs con timestamp en `logs/`.
-- Las salidas se almacenan en `results/figures/`, `results/tables/`, `results/DE*/` y `data/processed/`.
-- No se fijan semillas aleatorias; si se requiere determinismo estricto, definir `set.seed({SEED})`.
+### miEAA GSEA for Differential Expression (Script 09)
 
-### Checklist de reproducibilidad
+**Script**: `09_miEAA_GSEA_all_comparisons.R`
 
-- [ ] Confirmar versiones de R y paquetes.
-- [ ] Guardar copia de `config/de_specs.csv` usada en el run.
-- [ ] Registrar rutas exactas de inputs (conteos y metadatos).
-- [ ] Conservar logs con timestamp del run.
-- [ ] Verificar que las tablas DE usadas son las mas recientes (mtime).
+Gene Set Enrichment Analysis (GSEA) for miRNAs using miEAA (miRNA Enrichment Analysis and Annotation):
 
-### Plantilla de comandos (ejemplos)
+1. **miRNA extraction**: Selection of features annotated as miRNA from differential expression results.
+2. **Ranking metric**: By default, `signed_sqrtF` (sign of logFC multiplied by square root of F-statistic). Alternative metrics: `signed_logp`, `signed_F`, `signed_logFC`.
+3. **GSEA execution**: Via `rbioapi::rba_mieaa_enrich` using miRPathDB expert categories:
+   - GO Biological Process (mature miRNAs)
+   - GO Molecular Function (mature miRNAs)
+   - KEGG pathways (mature miRNAs)
+   - Reactome pathways (mature miRNAs)
+4. **Category validation**: Verification against `rba_mieaa_cats()`.
+5. **Significance filtering**: No pre-filtering applied (`sig_level = 1`); post-hoc filtering recommended.
+
+**Outputs**: Ranked miRNA lists, complete GSEA tables (unfiltered), top 50 by Q-value, and Q < 0.05 filtered results per comparison.
+
+### GSEA Visualization: Bubble Plots (Script 10)
+
+**Script**: `10_miEAA_GSEA_bubble_plots.R`
+
+Publication-ready bubble plots for GSEA results:
+
+1. **Data source**: Most recent `MiEAA_GSEA_all_*.tsv` per comparison.
+2. **P-value detection**: Priority order: P-adjusted > Q-value > P-value.
+3. **Term selection**: Top N terms per database (default: 12).
+4. **Visualization**: Separate bubble plots for enriched (green) and depleted (orange) pathways, plus combined figures using patchwork.
+5. **Export formats**: PDF (vector, 300 dpi), SVG (editable vector), PNG (600 dpi raster).
+
+**Styling specifications**: Colorblind-safe Okabe-Ito palette, explicit font sizing (8.5pt base), double-column journal preset (180 x 120 mm).
+
+### GSEA Quality Control: Barplots (Script 11)
+
+**Script**: `11_miEAA_GSEA_barplots.R`
+
+Stacked barplots for QC assessment of enrichment results:
+
+1. **Significance detection**: Automatic detection of P-adjusted, Q-value, or P-value columns.
+2. **Direction detection**: Classification of enrichment direction (enriched vs. depleted).
+3. **Visualization**: Stacked barplots by database and direction for configurable significance cutoffs.
+
+**Outputs**: PDF, SVG, and PNG exports with logs copied to output directories.
+
+### Category-level P-value Distributions (Script 12)
+
+**Script**: `12_miEAA_GSEA_categories_pvals.R`
+
+Distribution analysis of significance across pathway categories:
+
+1. **Metric visualization**: -log10(Q-value) and -log10(P-adjusted) distributions.
+2. **Plot type**: Boxplots with jittered points, ordered by median significance.
+3. **Category ordering**: Descending by median -log10(metric).
+
+**Outputs**: PDF, SVG, and PNG exports per metric.
+
+---
+
+## F) Survival Analysis
+
+### Exploratory Correlation Analysis (Script 06)
+
+**Script**: `06_survival_exploratory_spearman.R`
+
+Spearman rank correlation between expression and survival time:
+
+1. **Feature selection**: Union of features with FDR < threshold across all differential expression comparisons.
+2. **Correlation metrics**:
+   - **All samples**: Spearman correlation including both events and censored observations (`rho_all`, `p_all`, `n_all`).
+   - **Events only**: Restricted to patients with recorded death (`MUERTE = 1`) to assess within-event trends (`rho_event`, `p_event`, `n_event`).
+3. **Visualization**: Scatter plots with filled points for events, open circles for censored observations, linear regression trend line, and LOESS smoothing curve (both for illustration only).
+
+**Note**: This analysis is exploratory and does not account for censoring in the statistical test.
+
+### Cox Proportional Hazards Modeling (Script 07)
+
+**Script**: `07_survival_cox_univariate.R`
+
+Univariate Cox regression for survival association:
+
+1. **Feature selection**: Union of differentially expressed features (FDR < threshold).
+2. **Model specification**: `Surv(time, event) ~ expression` using `survival::coxph` with time variable (`MESES_SEGUIMIENTO_`) and event indicator (`MUERTE`).
+3. **Expression scaling**: Optional standardization for hazard ratio interpretation per standard deviation.
+4. **Multiple testing correction**: FDR adjustment (Benjamini-Hochberg).
+
+**Outputs**: Hazard ratios with 95% confidence intervals, p-values, FDR-adjusted p-values, and membership tables.
+
+### Kaplan-Meier Analysis (Script 08)
+
+**Script**: `08_KM_DE_candidates.R`
+
+Kaplan-Meier survival curves for differentially expressed candidates:
+
+1. **Candidate selection**: Features with FDR < threshold from differential expression analyses.
+2. **Group stratification**: Dichotomization by median expression or extreme quantiles.
+3. **Statistical test**: Log-rank test for survival differences between high and low expression groups.
+4. **Multiple testing correction**: FDR adjustment across all tested features.
+
+**Outputs**: Kaplan-Meier curve PDFs, individual feature PNGs, and summary tables with p-values and FDR.
+
+### Survival-ranked GSEA (Script 13)
+
+**Script**: `13_survGSEA.R`
+
+GSEA based on survival association rather than differential expression:
+
+1. **Data preparation**: Construction of logCPM (TMM-normalized) expression matrix restricted to miRNAs.
+2. **Survival modeling**: Univariate Cox proportional hazards regression per miRNA with expression as the sole predictor.
+3. **Ranking metric**: Signed Wald z-statistic from Cox models, where positive values indicate higher expression associated with worse survival.
+4. **GSEA execution**: `rbioapi::rba_mieaa_enrich` with `test_type = "GSEA"` using the survival-ranked miRNA list.
+5. **Pathway databases**: miRPathDB expert categories (GO BP, GO MF, KEGG, Reactome).
+
+**Key parameters**:
+- Expression scaling: Optional standardization (default: enabled) for consistent effect size interpretation.
+- Minimum events: Analyses require >= 5 events for stable Cox coefficient estimation.
+- Significance filtering: No pre-filtering (`sig_level = 1`); post-hoc filtering recommended.
+
+**Outputs**:
+- `Cox_univariate_miRNA_all_*.tsv`: Complete Cox regression results with HR, CI, p-values, and FDR.
+- `Ranked_miRNAs_by_CoxZ_*.txt`: Ordered miRNA list by survival association.
+- `miEAA_GSEA_all_miRPathDB_expert_*.tsv`: Complete GSEA results.
+- `miEAA_GSEA_top50_miRPathDB_expert_*.tsv`: Top 50 pathways by Q-value.
+
+### Survival GSEA Visualization (Script 14)
+
+**Script**: `14_survGSEA_plots.R`
+
+Publication-ready visualization of survival-ranked GSEA results:
+
+1. **Input**: `miEAA_GSEA_all_miRPathDB_expert_*.tsv` from script 13.
+2. **Plot types**:
+   - **Individual plots**: Separate bubble plots for enriched (green) and depleted (orange) pathways.
+   - **Combined figure**: Side-by-side comparison using patchwork.
+   - **Category distributions**: Boxplots of -log10(Q-value) and -log10(P-adjusted) by pathway database.
+3. **Styling**:
+   - Preset: `double_col` (180 x 120 mm base, journal double-column format).
+   - Colors: Okabe-Ito colorblind-safe palette (enriched: #009E73, depleted: #D55E00).
+   - Typography: 8.5pt base, Helvetica font family.
+   - Combined figure dimensions: 450 x 336 mm with increased Y-axis spacing for term readability.
+
+**Export formats**: PDF (cairo_pdf, 300 dpi), SVG (svglite, editable), PNG (600 dpi).
+
+**Output naming convention**:
+- `SurvivalRank_Bubble_miRPathDB_enriched_*.{pdf,svg,png}`
+- `SurvivalRank_Bubble_miRPathDB_depleted_*.{pdf,svg,png}`
+- `SurvivalRank_Bubble_miRPathDB_combined_*.{pdf,svg,png}`
+- `SurvivalRank_Categories_pvals_Q_*.{pdf,svg,png}`
+- `SurvivalRank_Categories_pvals_Padj_*.{pdf,svg,png}`
+
+---
+
+## G) Visualization and QC
+
+### Heatmaps of Significant Features (Script 04)
+
+**Script**: `04_heatmaps_sigRNAs.R`
+
+Clustered heatmaps for differentially expressed features:
+
+1. **Feature selection**: FDR < threshold per comparison.
+2. **Normalization**: Z-score transformation of logCPM (TMM) values per feature.
+3. **Visualization**: ComplexHeatmap with hierarchical clustering.
+
+**Outputs**: Heatmap figures and feature lists.
+
+### QC Plots per Significant Feature (Script 05)
+
+**Script**: `05_deg_qc_plots.R`
+
+Individual feature-level quality control:
+
+1. **Plot types**: Box/jitter plots for categorical variables, scatter plots for continuous variables.
+2. **Feature selection**: Top features ranked by FDR.
+
+**Outputs**: Individual PNGs and optional summary PDF.
+
+---
+
+## H) Software Environment
+
+### Programming Language
+
+- **R**: version 4.4.3 (2025-02-28)
+
+### Core Packages
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| edgeR | 4.4.2 | Differential expression (quasi-likelihood) |
+| limma | 3.62.2 | Linear modeling, MDS |
+| data.table | 1.17.8 | High-performance data manipulation |
+| ComplexHeatmap | 2.22.0 | Publication-quality heatmaps |
+| circlize | 0.4.17 | Circular visualization, color functions |
+| survival | 3.8.3 | Cox regression, Kaplan-Meier |
+| rbioapi | 0.8.3 | miEAA API access |
+| ggplot2 | 4.0.1 | Grammar of graphics visualization |
+| patchwork | 1.3.2 | Multi-panel figure assembly |
+
+### System
+
+- **Operating System**: Linux (WSL2)
+- **Conda Environment**: `omics-R`
+
+---
+
+## I) Reproducibility
+
+### Logging
+
+All scripts generate timestamped logs in `logs/` with the format `<script>_<timestamp>.txt`. Logs contain:
+
+- Execution timestamp
+- Input file paths
+- Parameter values
+- Processing steps and counts
+- Output file paths
+
+### Output Organization
+
+| Directory | Contents |
+|-----------|----------|
+| `results/figures/` | Visualization outputs (PDF, SVG, PNG) |
+| `results/tables/` | Tabular results (TSV, CSV) |
+| `results/DE*/` | Differential expression results |
+| `data/processed/` | Processed intermediate files |
+
+### Random Seed
+
+Where applicable (e.g., visualization jitter), random seeds are configurable via `--seed` parameter (default: 42). Scripts explicitly call `set.seed()` to ensure reproducibility.
+
+### Reproducibility Checklist
+
+- [ ] Confirm R and package versions match documented versions
+- [ ] Archive `config/de_specs.csv` used for the analysis run
+- [ ] Record exact paths to input count matrix and metadata
+- [ ] Preserve timestamped logs from each execution
+- [ ] Verify differential expression tables are from the intended run (check file modification times)
+
+---
+
+## J) Example Commands
+
+### Quality Control and Preprocessing
 
 ```bash
-# 01: inspeccion inicial
+# Initial count inspection
 Rscript scripts/01_inspeccion_counts.R data/intermediate/Gliomas_all_counts_merged.csv
 
-# 02: logCPM + MDS
+# LogCPM normalization and MDS
 Rscript scripts/02_logcpm_mds.R data/intermediate/Gliomas_all_counts_merged.csv
+```
 
-# 03: DE multi (por spec)
+### Differential Expression
+
+```bash
+# Multi-comparison DE (via spec file)
 Rscript scripts/03_edgeR_multiDE.R \
   --counts data/intermediate/Gliomas_all_counts_merged.csv \
   --meta data/intermediate/Metadatos_gliomas_verificados.csv \
   --spec config/de_specs.csv \
   --outdir results/DE
 
-# 03_2: DE miRNA+protein_coding
+# miRNA + protein-coding restricted DE
 Rscript scripts/03_2_edgeR_multiDE_miRNA_protCoding.R \
   --counts data/intermediate/Gliomas_all_counts_merged.csv \
   --meta data/intermediate/Metadatos_gliomas_verificados.csv \
   --spec config/de_specs.csv \
   --outdir results/DE_miRNA_protCoding
+```
 
-# 04: heatmaps
+### Visualization
+
+```bash
+# Heatmaps
 Rscript scripts/04_heatmaps_sigRNAs.R \
   --counts data/intermediate/Gliomas_all_counts_merged.csv \
   --meta data/intermediate/Metadatos_gliomas_verificados.csv \
   --spec config/de_specs.csv \
   --de_dir results/DE
 
-# 05: QC plots por DEG
+# QC plots
 Rscript scripts/05_deg_qc_plots.R \
   --counts data/intermediate/Gliomas_all_counts_merged.csv \
   --meta data/intermediate/Metadatos_gliomas_verificados.csv \
   --spec config/de_specs.csv \
   --de_dir results/DE
+```
 
-# 06: Spearman exploratorio
+### Survival Analysis
+
+```bash
+# Exploratory Spearman correlation
 Rscript scripts/06_survival_exploratory_spearman.R \
   --counts data/intermediate/Gliomas_all_counts_merged.csv \
   --meta data/intermediate/Metadatos_gliomas_verificados.csv \
@@ -193,7 +402,7 @@ Rscript scripts/06_survival_exploratory_spearman.R \
   --de_dir results/DE \
   --fdr 0.1
 
-# 07: Cox univariado
+# Cox univariate regression
 Rscript scripts/07_survival_cox_univariate.R \
   --counts data/intermediate/Gliomas_all_counts_merged.csv \
   --meta data/intermediate/Metadatos_gliomas_verificados.csv \
@@ -201,28 +410,32 @@ Rscript scripts/07_survival_cox_univariate.R \
   --de_dir results/DE \
   --fdr 0.1
 
-# 08: KM para candidatos DE
+# Kaplan-Meier curves
 Rscript scripts/08_KM_DE_candidates.R \
   --counts data/intermediate/Gliomas_all_counts_merged.csv \
   --meta data/intermediate/Metadatos_gliomas_verificados.csv \
   --spec config/de_specs.csv \
   --de_root results/DE \
   --fdr_cut 0.1
+```
 
-# 09: miEAA GSEA
+### Functional Enrichment (Differential Expression-based)
+
+```bash
+# miEAA GSEA
 Rscript scripts/09_miEAA_GSEA_all_comparisons.R \
   --spec config/de_specs.csv \
   --de_root results/DE \
   --out_root results/tables/MiEAA_GSEA
 
-# 10: bubble plots miEAA
+# Bubble plots
 Rscript scripts/10_miEAA_GSEA_bubble_plots.R \
   --spec config/de_specs.csv \
   --in_root results/tables/MiEAA_GSEA \
   --out_root results/figures/MiEAA_GSEA_bubble \
   --run_tag A_conservative
 
-# 11: QC barplots miEAA
+# QC barplots
 Rscript scripts/11_miEAA_GSEA_barplots.R \
   --spec config/de_specs.csv \
   --in_root results/tables/MiEAA_GSEA \
@@ -230,7 +443,7 @@ Rscript scripts/11_miEAA_GSEA_barplots.R \
   --run_tag A_conservative \
   --cutoff 0.25
 
-# 12: categories p-values miEAA
+# Category p-value distributions
 Rscript scripts/12_miEAA_GSEA_categories_pvals.R \
   --spec config/de_specs.csv \
   --in_root results/tables/MiEAA_GSEA \
@@ -238,41 +451,66 @@ Rscript scripts/12_miEAA_GSEA_categories_pvals.R \
   --run_tag A_conservative
 ```
 
-### Tabla de parametros clave
+### Functional Enrichment (Survival-based)
 
-| Parametro | Significado | Valor (por defecto) |
-|---|---|---|
-| `drop_regex` | Patron para excluir muestras (post-mortem) | `^A` |
-| `min_libsize` | Filtro global de library size | `100000` |
-| `prior_count` | Prior para logCPM | `2` |
-| `min_expr` | Filtro por suma de conteos (script 02) | `10` |
-| `fdrs` | Umbrales para figuras QC/heatmaps | `0.05,0.1` |
-| `fdr_thr` | Umbral union DE para supervivencia | `0.1` |
-| `max_features` | Max features en heatmap/QC | `200` (heatmap), `30` (QC) |
-| `rank_mode` | Score para ranking miEAA | `signed_sqrtF` |
-| `mieaa_categories` | Categorias miEAA (default) | `miRPathDB_GO_Biological_process_mature; miRPathDB_GO_Molecular_function_mature; miRPathDB_KEGG_mature; miRPathDB_Reactome_mature` |
-| `mieaa_sig_level` | Filtro en request miEAA | `1` |
-| `mieaa_min_hits` | Min hits para miEAA | `5` |
-| `bubble_n_mirpathdb` | Top N por base (miRPathDB) | `12` |
-| `qc_cutoff` | Umbral de significancia para QC | `0.25` |
-| `qc_also_cutoff` | Umbral adicional QC (opcional) | `0.05` |
-| `categories_wrap_width` | Wrap labels categories p-values | `35` |
-| `km_cut` | Regla de corte KM | `median` |
-| `min_group_n` | Minimo por grupo en KM | `5` |
-| `standardize` | HR por 1 SD (Cox) | `FALSE` |
+```bash
+# Survival-ranked GSEA
+Rscript scripts/13_survGSEA.R \
+  --counts data/intermediate/Gliomas_all_counts_merged.csv \
+  --meta data/intermediate/Metadatos_gliomas_verificados.csv \
+  --out_root results \
+  --run_tag SurvivalRank_CoxZ_miRPathDB
 
-## Resumen por script (trazabilidad)
+# Survival GSEA visualization
+Rscript scripts/14_survGSEA_plots.R \
+  --in_root results/tables/SurvivalRank_GSEA \
+  --out_root results/figures/SurvivalRank_GSEA \
+  --run_tag SurvivalRank_CoxZ_miRPathDB \
+  --n_mirpathdb 12 \
+  --preset double_col
+```
 
-- `scripts/01_inspeccion_counts.R`: inspeccion de conteos, library size, ceros, barplot de library size y MDS con etiquetas.
-- `scripts/02_logcpm_mds.R`: logCPM TMM, RLE, densidades, MDS/PCA y exportes.
-- `scripts/03_edgeR_multiDE.R`: DE con edgeR (QL), multiples modos via `spec` o `--vars`.
-- `scripts/03_2_edgeR_multiDE_miRNA_protCoding.R`: DE restringido a miRNA y protein_coding.
-- `scripts/04_heatmaps_sigRNAs.R`: heatmaps Z-score de features DE significativas.
-- `scripts/05_deg_qc_plots.R`: QC visual por feature (box/jitter o scatter continuo).
-- `scripts/06_survival_exploratory_spearman.R`: Spearman expr vs seguimiento en union DE.
-- `scripts/07_survival_cox_univariate.R`: Cox univariado en union DE con FDR.
-- `scripts/08_KM_DE_candidates.R`: KM alto/bajo para candidatos DE.
-- `scripts/09_miEAA_GSEA_all_comparisons.R`: GSEA miEAA desde rankings por comparacion (default `signed_sqrtF`).
-- `scripts/10_miEAA_GSEA_bubble_plots.R`: bubble plots miEAA (miRPathDB 2x2) desde tablas completas.
-- `scripts/11_miEAA_GSEA_barplots.R`: barplots QC miEAA por base y direccion (cutoffs configurables).
-- `scripts/12_miEAA_GSEA_categories_pvals.R`: distribuciones p-values por categoria (Q-value y P-adjusted).
+---
+
+## K) Key Parameters Reference
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `drop_regex` | Regex for sample exclusion (post-mortem) | `^A` |
+| `min_libsize` | Minimum library size threshold | 100,000 |
+| `prior_count` | Prior count for logCPM calculation | 2 |
+| `min_expr` | Minimum total count for feature retention | 10 |
+| `fdrs` | FDR thresholds for visualization | 0.05, 0.10 |
+| `fdr_thr` | FDR threshold for feature selection (survival) | 0.10 |
+| `max_features` | Maximum features for heatmap/QC | 200 / 30 |
+| `rank_mode` | GSEA ranking metric | `signed_sqrtF` |
+| `mieaa_categories` | miRPathDB categories | GO BP, GO MF, KEGG, Reactome |
+| `bubble_n_mirpathdb` | Top N terms per database | 12 |
+| `qc_cutoff` | Significance cutoff for QC plots | 0.25 |
+| `km_cut` | Kaplan-Meier group stratification | median |
+| `min_group_n` | Minimum samples per KM group | 5 |
+| `scale_expr` | Standardize expression in Cox models | TRUE |
+| `preset` | Figure dimension preset | `double_col` |
+| `seed` | Random seed for reproducibility | 42 |
+
+---
+
+## L) Script Summary Table
+
+| Script | Purpose | Key Outputs |
+|--------|---------|-------------|
+| `01_inspeccion_counts.R` | Count matrix QC, library sizes | Inspection figures, RDS |
+| `02_logcpm_mds.R` | Normalization, MDS | logCPM matrix, MDS coordinates |
+| `03_edgeR_multiDE.R` | Differential expression (all features) | DE tables, volcano/MD plots |
+| `03_2_edgeR_multiDE_miRNA_protCoding.R` | DE (miRNA + protein-coding) | DE tables, plots |
+| `04_heatmaps_sigRNAs.R` | Clustered heatmaps | Heatmap PDFs, feature lists |
+| `05_deg_qc_plots.R` | Feature-level QC | Individual PNGs, summary PDF |
+| `06_survival_exploratory_spearman.R` | Expression-survival correlation | Correlation tables, scatter plots |
+| `07_survival_cox_univariate.R` | Cox regression | HR tables with CI and FDR |
+| `08_KM_DE_candidates.R` | Kaplan-Meier analysis | KM curves, summary tables |
+| `09_miEAA_GSEA_all_comparisons.R` | GSEA (DE-based) | GSEA tables, ranked lists |
+| `10_miEAA_GSEA_bubble_plots.R` | Bubble plot visualization | PDF/SVG/PNG figures |
+| `11_miEAA_GSEA_barplots.R` | QC barplots | PDF/SVG/PNG figures |
+| `12_miEAA_GSEA_categories_pvals.R` | Category distributions | PDF/SVG/PNG figures |
+| `13_survGSEA.R` | GSEA (survival-ranked) | Cox tables, GSEA results |
+| `14_survGSEA_plots.R` | Survival GSEA visualization | PDF/SVG/PNG figures |

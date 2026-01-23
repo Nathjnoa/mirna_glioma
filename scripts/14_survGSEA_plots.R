@@ -1,6 +1,11 @@
 #!/usr/bin/env Rscript
+# ============================================================================
+# SurvivalRank GSEA Plots - Publication-ready figures
+# Generates separate bubble plots for enriched vs depleted processes per DB
+# ============================================================================
 options(stringsAsFactors = FALSE)
 
+# ---- CLI argument parsing ----
 args <- commandArgs(trailingOnly = TRUE)
 get_arg <- function(flag, default = NULL) {
   hit <- which(args == flag)
@@ -20,6 +25,7 @@ safe_name <- function(x) {
   x
 }
 
+# ---- Input parameters with validation ----
 in_root <- get_arg("--in_root", file.path("results", "tables", "SurvivalRank_GSEA"))
 out_root <- get_arg("--out_root", file.path("results", "figures", "SurvivalRank_GSEA"))
 run_tag <- get_arg("--run_tag", "SurvivalRank_CoxZ_miRPathDB")
@@ -28,6 +34,12 @@ n_mirpathdb <- as.integer(get_arg("--n_mirpathdb", "12"))
 wrap_width <- as.integer(get_arg("--wrap_width", "40"))
 preset <- get_arg("--preset", "double_col")
 stamp <- tolower(get_arg("--stamp", "true")) %in% c("true","t","1","yes","y")
+seed <- as.integer(get_arg("--seed", "42"))
+
+# Input validation
+if (!nzchar(run_tag)) stop("run_tag cannot be empty")
+if (n_mirpathdb < 1) stop("n_mirpathdb must be >= 1")
+if (wrap_width < 10) stop("wrap_width must be >= 10")
 
 get_script_dir <- function() {
   cmd <- commandArgs(trailingOnly = FALSE)
@@ -67,36 +79,70 @@ suppressPackageStartupMessages({
   library(ggplot2)
   library(dplyr)
   library(stringr)
+  library(patchwork)  # For multi-panel combined figures
 })
 
+# Set seed for reproducibility
+set.seed(seed)
+
+# ---- Publication-ready presets (explicit dimensions and styling) ----
 presets <- list(
-  single_col = list(width_mm = 85, height_mm = 65, base = 8, title = 9, axis = 8,
-                    legend = 7, ticks = 7, line = 0.6, point = 1.6, spacing_mm = 2, margin_mm = 6),
-  double_col = list(width_mm = 180, height_mm = 120, base = 8.5, title = 10, axis = 8.5,
-                    legend = 7.5, ticks = 7.5, line = 0.7, point = 1.8, spacing_mm = 2.5, margin_mm = 7),
-  presentation = list(width_mm = 254, height_mm = 143, base = 18, title = 22, axis = 18,
-                      legend = 16, ticks = 16, line = 1.5, point = 4, spacing_mm = 6, margin_mm = 10),
-  poster = list(width_mm = 508, height_mm = 356, base = 28, title = 34, axis = 28,
-                legend = 24, ticks = 24, line = 2.0, point = 6, spacing_mm = 10, margin_mm = 15)
+  single_col = list(
+    width_mm = 85, height_mm = 65, base = 8, title = 9, axis = 8,
+    legend = 7, ticks = 7, line = 0.6, point = 1.6, spacing_mm = 2,
+    margin_mm = 6, dpi_vector = 300, dpi_raster = 600
+  ),
+  double_col = list(
+    width_mm = 180, height_mm = 120, base = 8.5, title = 10, axis = 8.5,
+    legend = 7.5, ticks = 7.5, line = 0.7, point = 1.8, spacing_mm = 2.5,
+    margin_mm = 7, dpi_vector = 300, dpi_raster = 600
+  ),
+  presentation = list(
+    width_mm = 254, height_mm = 143, base = 18, title = 22, axis = 18,
+    legend = 16, ticks = 16, line = 1.5, point = 4, spacing_mm = 6,
+    margin_mm = 10, dpi_vector = 300, dpi_raster = 300
+  ),
+  poster = list(
+    width_mm = 508, height_mm = 356, base = 28, title = 34, axis = 28,
+    legend = 24, ticks = 24, line = 2.0, point = 6, spacing_mm = 10,
+    margin_mm = 15, dpi_vector = 300, dpi_raster = 300
+  )
 )
-if (!preset %in% names(presets)) stop("preset invalido: ", preset)
+if (!preset %in% names(presets)) stop("preset invalido: ", preset, " (esperado: ", paste(names(presets), collapse = ", "), ")")
 p <- presets[[preset]]
 
+# ---- Publication-ready theme (colorblind-safe, explicit sizing) ----
 theme_pub <- function() {
   theme_minimal(base_size = p$base, base_family = "Helvetica") +
     theme(
-      plot.title = element_text(size = p$title, face = "bold"),
-      axis.title = element_text(size = p$axis),
-      axis.text = element_text(size = p$ticks, color = "black"),
+      plot.title = element_text(size = p$title, face = "bold", hjust = 0),
+      axis.title = element_text(size = p$axis, face = "plain"),
+      axis.text.x = element_text(size = p$ticks, color = "black", angle = 0, hjust = 0.5),
+      axis.text.y = element_text(size = p$axis, color = "black", lineheight = 0.9,
+                                  margin = margin(r = 2, unit = "mm")),  # Added lineheight and margin for better spacing
       strip.text = element_text(size = p$axis, face = "bold"),
-      legend.title = element_text(size = p$legend),
+      legend.title = element_text(size = p$legend, face = "bold"),
       legend.text = element_text(size = p$legend),
+      legend.position = "right",
+      legend.key.size = unit(4, "mm"),
       panel.grid.minor = element_blank(),
       panel.grid.major.y = element_blank(),
-      panel.spacing = unit(p$spacing_mm, "mm"),
-      plot.margin = margin(p$margin_mm, p$margin_mm, p$margin_mm, p$margin_mm + 6, unit = "mm")
+      panel.grid.major.x = element_line(color = "grey90", linewidth = 0.3),
+      panel.border = element_blank(),
+      panel.spacing.x = unit(p$spacing_mm, "mm"),
+      panel.spacing.y = unit(p$spacing_mm * 2.4, "mm"),  # Increased vertical spacing between facet panels (+20%)
+      plot.margin = margin(p$margin_mm, p$margin_mm, p$margin_mm, p$margin_mm + 6, unit = "mm"),
+      strip.background = element_rect(fill = "grey95", color = NA)
     )
 }
+
+# ---- Colorblind-safe palette (Okabe-Ito inspired) ----
+# Enriched: green (#009E73), Depleted: orange (#D55E00), Other: grey
+colors_direction <- c(
+  "Enriched" = "#009E73",
+  "Depleted" = "#D55E00",
+  "Other" = "#999999"
+)
 
 norm_name <- function(x) {
   x <- tolower(x)
@@ -151,26 +197,52 @@ order_terms <- function(df, group_col = NULL) {
   df
 }
 
-save_plot <- function(plot, out_base, n_rows = 1, width_mult = 1) {
+# ---- Deterministic export function (PDF + SVG + PNG) ----
+save_plot <- function(plot, out_base, n_rows = 1, width_mult = 1, height_mult = 1) {
   width_mm <- p$width_mm * width_mult
-  height_mm <- p$height_mm * n_rows
-  pdf_dev <- if (capabilities("cairo")) cairo_pdf else "pdf"
-  ggsave(paste0(out_base, ".pdf"), plot, width = width_mm, height = height_mm,
-         units = "mm", dpi = 300, limitsize = FALSE, device = pdf_dev)
-  svg_dev <- if (requireNamespace("svglite", quietly = TRUE)) svglite::svglite else "svg"
-  tryCatch(
-    ggsave(paste0(out_base, ".svg"), plot, width = width_mm, height = height_mm,
-           units = "mm", dpi = 300, limitsize = FALSE, device = svg_dev),
-    error = function(e) warning("No se pudo crear SVG: ", conditionMessage(e))
-  )
-  tryCatch(
-    ggsave(paste0(out_base, ".png"), plot, width = width_mm, height = height_mm,
-           units = "mm", dpi = 600, limitsize = FALSE),
-    error = function(e) warning("No se pudo crear PNG: ", conditionMessage(e))
-  )
-  if (!file.exists(paste0(out_base, ".pdf"))) {
-    warning("No se pudo crear PDF: ", out_base, ".pdf")
+  height_mm <- p$height_mm * height_mult * n_rows
+
+  # PDF with font embedding
+  pdf_dev <- if (capabilities("cairo")) cairo_pdf else pdf
+  pdf_path <- paste0(out_base, ".pdf")
+  tryCatch({
+    ggsave(pdf_path, plot, width = width_mm, height = height_mm,
+           units = "mm", dpi = p$dpi_vector, limitsize = FALSE, device = pdf_dev)
+    cat("  Exported:", pdf_path, sprintf("(%d x %d mm)\n", round(width_mm), round(height_mm)))
+  }, error = function(e) {
+    warning("Failed to create PDF: ", conditionMessage(e))
+  })
+
+  # SVG (vector, editable text)
+  svg_path <- paste0(out_base, ".svg")
+  if (requireNamespace("svglite", quietly = TRUE)) {
+    tryCatch({
+      ggsave(svg_path, plot, width = width_mm, height = height_mm,
+             units = "mm", dpi = p$dpi_vector, limitsize = FALSE, device = svglite::svglite)
+      cat("  Exported:", svg_path, "\n")
+    }, error = function(e) {
+      warning("Failed to create SVG: ", conditionMessage(e))
+    })
+  } else {
+    cat("  SKIP SVG (svglite not installed)\n")
   }
+
+  # PNG (raster, high-res)
+  png_path <- paste0(out_base, ".png")
+  tryCatch({
+    ggsave(png_path, plot, width = width_mm, height = height_mm,
+           units = "mm", dpi = p$dpi_raster, limitsize = FALSE, device = "png")
+    cat("  Exported:", png_path, sprintf("(%d dpi)\n", p$dpi_raster))
+  }, error = function(e) {
+    warning("Failed to create PNG: ", conditionMessage(e))
+  })
+
+  # Verify at least PDF was created
+  if (!file.exists(pdf_path)) {
+    stop("CRITICAL: Failed to create PDF export: ", pdf_path)
+  }
+
+  invisible(list(pdf = pdf_path, svg = svg_path, png = png_path))
 }
 
 find_latest <- function(root, run_tag, kind = c("all", "top50")) {
@@ -187,18 +259,28 @@ find_latest <- function(root, run_tag, kind = c("all", "top50")) {
   ff[order(file.info(ff)$mtime, decreasing = TRUE)][1]
 }
 
+# ---- Validate inputs ----
+if (!dir.exists(in_root)) {
+  stop("Input directory not found: ", in_root, "\nCheck --in_root parameter")
+}
+
+# ---- Structured logging ----
 cat("============================================\n")
-cat("SurvivalRank miEAA plots\n")
+cat("SurvivalRank GSEA Plots - Publication Ready\n")
+cat("============================================\n")
 cat("Timestamp:", as.character(Sys.time()), "\n")
-cat("in_root:", in_root, "\n")
-cat("out_root:", out_root, "\n")
-cat("run_tag:", run_tag, "\n")
-cat("label:", plot_label, "\n")
-cat("n_mirpathdb:", n_mirpathdb, "\n")
-cat("wrap_width:", wrap_width, "\n")
-cat("preset:", preset, "\n")
-cat("stamp:", stamp, "\n")
-cat("Log:", log_fp, "\n")
+cat("Input root:", in_root, "\n")
+cat("Output root:", out_root, "\n")
+cat("Run tag:", run_tag, "\n")
+cat("Label:", plot_label, "\n")
+cat("Top N per DB:", n_mirpathdb, "\n")
+cat("Label wrap width:", wrap_width, "\n")
+cat("Preset:", preset, "\n")
+cat("Stamp:", stamp, "\n")
+cat("Seed (reproducibility):", seed, "\n")
+cat("Figure dimensions:", sprintf("%d x %d mm", p$width_mm, p$height_mm), "\n")
+cat("DPI (vector/raster):", sprintf("%d / %d", p$dpi_vector, p$dpi_raster), "\n")
+cat("Log file:", log_fp, "\n")
 cat("Log copy:", log_fp_copy, "\n")
 cat("============================================\n\n")
 
@@ -271,92 +353,123 @@ mirpath_levels <- c(
   "Reactome (miRPathDB)"
 )
 
-# ---- Bubble 2x2 ----
+# ---- miRPathDB bubble plots: SEPARATE enriched vs depleted ----
 df_mirpath <- df[df$db %in% mirpath_levels, , drop = FALSE]
 df_mirpath$db <- factor(df_mirpath$db, levels = mirpath_levels)
-df_mirpath <- df_mirpath %>%
-  group_by(db) %>%
-  arrange(pval_use, .by_group = TRUE) %>%
-  slice_head(n = n_mirpathdb) %>%
-  ungroup()
 
-cat("miRPathDB terms:", paste(names(table(df_mirpath$db)), table(df_mirpath$db), sep = "=", collapse = ", "), "\n")
+# Check if direction column is available
+has_direction <- !is.na(enrich_col) && "direction" %in% names(df_mirpath) && any(df_mirpath$direction %in% c("Enriched", "Depleted"))
 
-if (nrow(df_mirpath) > 0) {
-  df_mirpath <- order_terms(df_mirpath, group_col = "db")
-  size_range <- c(p$point * 0.8, p$point * 2.8)
-  if (!is.na(enrich_col)) {
-    color_scale <- scale_color_manual(
-      values = c(Enriched = "#009E73", Depleted = "#D55E00", Other = "#999999"),
-      name = "Direction",
-      drop = FALSE
-    )
-    p_mirpath <- ggplot(df_mirpath, aes(x = logp, y = term_plot, color = direction)) +
-      geom_point(aes(size = observed), alpha = 0.85)
-  } else {
-    color_scale <- scale_color_viridis_c(option = "D", end = 0.9, name = p_sel$source)
-    p_mirpath <- ggplot(df_mirpath, aes(x = logp, y = term_plot, color = pval_use)) +
-      geom_point(aes(size = observed), alpha = 0.85)
-  }
-  p_mirpath <- p_mirpath +
-    facet_wrap(~db, ncol = 2, drop = FALSE, scales = "free_y",
-               labeller = labeller(db = label_wrap_gen(width = 16))) +
-    scale_y_discrete(labels = function(x) str_wrap(gsub("\\|\\|\\|.*$", "", x), width = wrap_width)) +
-    color_scale +
-    scale_size(range = size_range, name = "Observed") +
-    labs(x = paste0("-log10(", p_sel$source, ")"), y = NULL,
-         title = paste0("miRPathDB summary: ", plot_label)) +
-    theme_pub()
-
-  out_base <- file.path(out_root, run_tag,
-                        paste0("SurvivalRank_Bubble_miRPathDB_2x2_", safe_name(plot_label),
-                               if (stamp) paste0("_", ts) else ""))
-  save_plot(p_mirpath, out_base, n_rows = 2, width_mult = 1.25)
-} else {
-  cat("WARN -> sin terminos miRPathDB para graficar.\n")
-}
-
-# ---- Bubble (enriched only, top N per DB; sig-filtered) ----
-if (!is.na(enrich_col)) {
-  df_enriched <- df[df$db %in% mirpath_levels & df$direction == "Enriched", , drop = FALSE]
-  df_enriched$db <- factor(df_enriched$db, levels = mirpath_levels)
-  df_enriched <- df_enriched[is.finite(df_enriched$pval_use) & df_enriched$pval_use < 0.05, , drop = FALSE]
-  df_enriched <- df_enriched %>%
+if (!has_direction) {
+  cat("WARN -> No direction column; generating single combined plot.\n")
+  # Fallback: single plot with all terms
+  df_mirpath <- df_mirpath %>%
     group_by(db) %>%
     arrange(pval_use, .by_group = TRUE) %>%
     slice_head(n = n_mirpathdb) %>%
     ungroup()
 
-  cat("miRPathDB enriched terms:", paste(names(table(df_enriched$db)), table(df_enriched$db), sep = "=", collapse = ", "), "\n")
-
-  if (nrow(df_enriched) > 0) {
-    df_enriched <- order_terms(df_enriched, group_col = "db")
+  if (nrow(df_mirpath) > 0) {
+    df_mirpath <- order_terms(df_mirpath, group_col = "db")
     size_range <- c(p$point * 0.8, p$point * 2.8)
-    color_scale <- scale_color_manual(
-      values = c(Enriched = "#009E73", Depleted = "#D55E00", Other = "#999999"),
-      name = "Direction",
-      drop = FALSE
-    )
-    p_enriched <- ggplot(df_enriched, aes(x = logp, y = term_plot, color = direction)) +
-      geom_point(aes(size = observed), alpha = 0.85) +
+    p_mirpath <- ggplot(df_mirpath, aes(x = logp, y = term_plot)) +
+      geom_point(aes(size = observed), alpha = 0.85, color = "#009E73") +
       facet_wrap(~db, ncol = 2, drop = FALSE, scales = "free_y",
                  labeller = labeller(db = label_wrap_gen(width = 16))) +
-      scale_y_discrete(labels = function(x) str_wrap(gsub("\\|\\|\\|.*$", "", x), width = wrap_width)) +
-      color_scale +
+      scale_y_discrete(labels = function(x) str_wrap(gsub("\\|\\|\\|.*$", "", x), width = wrap_width),
+                       expand = expansion(mult = 0.04, add = 0.75)) +  # Add vertical padding between terms
       scale_size(range = size_range, name = "Observed") +
       labs(x = paste0("-log10(", p_sel$source, ")"), y = NULL,
-           title = paste0("miRPathDB enriched (top ", n_mirpathdb, "): ", plot_label)) +
+           title = paste0("miRPathDB: ", plot_label)) +
       theme_pub()
 
     out_base <- file.path(out_root, run_tag,
-                          paste0("SurvivalRank_Bubble_miRPathDB_EnrichedTop_", safe_name(plot_label),
+                          paste0("SurvivalRank_Bubble_miRPathDB_combined_", safe_name(plot_label),
                                  if (stamp) paste0("_", ts) else ""))
-    save_plot(p_enriched, out_base, n_rows = 2, width_mult = 1.25)
-  } else {
-    cat("WARN -> sin terminos enriched para graficar.\n")
+    save_plot(p_mirpath, out_base, n_rows = 2, width_mult = 1.25)
   }
 } else {
-  cat("WARN -> no hay columna Enrichment; se omite plot enriched.\n")
+  # ---- SEPARATE PLOTS: Enriched and Depleted ----
+  cat("Analysis: Generating separate enriched/depleted plots\n")
+
+  # Store plots for combined figure
+  plots_list <- list()
+
+  for (dir_type in c("Enriched", "Depleted")) {
+    df_dir <- df_mirpath %>%
+      filter(direction == dir_type) %>%
+      group_by(db) %>%
+      arrange(pval_use, .by_group = TRUE) %>%
+      slice_head(n = n_mirpathdb) %>%
+      ungroup()
+
+    dir_counts <- table(df_dir$db)
+    cat(sprintf("  %s terms: %s\n", dir_type, paste(names(dir_counts), dir_counts, sep = "=", collapse = ", ")))
+
+    if (nrow(df_dir) == 0) {
+      cat(sprintf("  SKIP %s: no terms available\n", dir_type))
+      next
+    }
+
+    # Order terms within each DB
+    df_dir <- order_terms(df_dir, group_col = "db")
+
+    # Size range for bubbles
+    size_range <- c(p$point * 0.8, p$point * 2.8)
+
+    # Color: single color per direction (no legend needed)
+    dir_color <- colors_direction[[dir_type]]
+
+    # Create plot
+    p_dir <- ggplot(df_dir, aes(x = logp, y = term_plot)) +
+      geom_point(aes(size = observed), alpha = 0.85, color = dir_color) +
+      facet_wrap(~db, ncol = 2, drop = FALSE, scales = "free_y",
+                 labeller = labeller(db = label_wrap_gen(width = 16))) +
+      scale_y_discrete(labels = function(x) str_wrap(gsub("\\|\\|\\|.*$", "", x), width = wrap_width),
+                       expand = expansion(mult = 0.04, add = 0.75)) +  # Add vertical padding between terms
+      scale_size(range = size_range, name = "Observed") +
+      labs(
+        x = paste0("-log10(", p_sel$source, ")"),
+        y = NULL,
+        title = paste0("miRPathDB ", dir_type, ": ", plot_label)
+      ) +
+      theme_pub()
+
+    # Save individual plot
+    dir_tag <- tolower(dir_type)
+    out_base <- file.path(out_root, run_tag,
+                          paste0("SurvivalRank_Bubble_miRPathDB_", dir_tag, "_", safe_name(plot_label),
+                                 if (stamp) paste0("_", ts) else ""))
+    save_plot(p_dir, out_base, n_rows = 2, width_mult = 1.25)
+    cat(sprintf("  Saved %s plot\n", dir_type))
+
+    # Store plot for combined figure
+    plots_list[[dir_type]] <- p_dir
+  }
+
+  # ---- COMBINED PLOT: Enriched + Depleted side-by-side ----
+  if (length(plots_list) == 2) {
+    cat("  Creating combined figure (Enriched + Depleted)...\n")
+
+    # Combine plots horizontally with patchwork
+    p_combined <- plots_list[["Enriched"]] + plots_list[["Depleted"]] +
+      plot_layout(guides = "collect") +
+      plot_annotation(
+        title = paste0("miRPathDB Enrichment Summary: ", plot_label),
+        theme = theme(
+          plot.title = element_text(size = p$title + 1, face = "bold", hjust = 0.5)
+        )
+      )
+
+    # Save combined plot (wider + taller for better Y-axis spacing)
+    out_base_combined <- file.path(out_root, run_tag,
+                                    paste0("SurvivalRank_Bubble_miRPathDB_combined_", safe_name(plot_label),
+                                           if (stamp) paste0("_", ts) else ""))
+    save_plot(p_combined, out_base_combined, n_rows = 2, width_mult = 2.5, height_mult = 1.4)
+    cat("  Saved combined plot\n")
+  } else {
+    cat("  SKIP combined plot: need both Enriched and Depleted\n")
+  }
 }
 
 # ---- Categories p-values (Q and P-adjusted) ----
@@ -374,21 +487,22 @@ plot_metric <- function(metric, label, out_tag) {
   med <- dd %>% group_by(db) %>% summarise(med = median(logv, na.rm = TRUE), .groups = "drop")
   ord <- med %>% arrange(desc(med)) %>% pull(db)
   dd$db <- factor(dd$db, levels = ord)
-  title_txt <- paste0(plot_label, " | ", run_tag, " | Categories p-values (metric: ", label, ")")
+  title_txt <- paste0("Categories p-values: ", plot_label, " (", label, ")")
 
   p_plot <- ggplot(dd, aes(x = db, y = logv)) +
-    geom_boxplot(outlier.shape = NA, alpha = 0.25, linewidth = p$line * 0.5,
-                 color = "#4D4D4D", fill = "#B3CDE3") +
-    geom_jitter(width = 0.18, alpha = 0.8, size = 1.2, color = "#0072B2") +
+    geom_boxplot(outlier.shape = NA, alpha = 0.3, linewidth = p$line * 0.6,
+                 color = "#4D4D4D", fill = "#009E73") +
+    geom_jitter(width = 0.20, alpha = 0.7, size = p$point * 0.6, color = "#00000080") +
     scale_x_discrete(labels = function(x) str_wrap(x, width = wrap_width)) +
     labs(x = NULL, y = paste0("-log10(", label, ")"), title = title_txt) +
     theme_pub() +
-    theme(axis.text.x = element_text(angle = 25, hjust = 1))
+    theme(axis.text.x = element_text(angle = 25, hjust = 1, size = p$ticks))
 
   out_base <- file.path(out_root, run_tag,
                         paste0("SurvivalRank_Categories_pvals_", out_tag, "_", safe_name(plot_label),
                                if (stamp) paste0("_", ts) else ""))
   save_plot(p_plot, out_base)
+  cat("  Saved categories p-values plot:", label, "\n")
 }
 
 df$qval <- if ("Q-value" %in% names(df)) as_num_safe(df[["Q-value"]]) else NA_real_

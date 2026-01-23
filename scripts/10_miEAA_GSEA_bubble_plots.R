@@ -1,6 +1,11 @@
 #!/usr/bin/env Rscript
+# ============================================================================
+# miEAA GSEA Bubble Plots - Publication-ready figures
+# Generates separate bubble plots for enriched vs depleted processes per DB
+# ============================================================================
 options(stringsAsFactors = FALSE)
 
+# ---- CLI argument parsing ----
 args <- commandArgs(trailingOnly = TRUE)
 get_arg <- function(flag, default = NULL) {
   hit <- which(args == flag)
@@ -20,6 +25,7 @@ safe_name <- function(x) {
   x
 }
 
+# ---- Input parameters with validation ----
 spec_fp <- get_arg("--spec", file.path("config", "de_specs.csv"))
 in_root <- get_arg("--in_root", file.path("results", "tables", "MiEAA_GSEA"))
 out_root <- get_arg("--out_root", file.path("results", "figures", "MiEAA_GSEA_bubble"))
@@ -27,6 +33,12 @@ run_tag <- get_arg("--run_tag", "A_conservative")
 n_mirpathdb <- as.integer(get_arg("--n_mirpathdb", "12"))
 wrap_width <- as.integer(get_arg("--wrap_width", "40"))
 preset <- get_arg("--preset", "double_col")
+seed <- as.integer(get_arg("--seed", "42"))
+
+# Input validation
+if (!nzchar(run_tag)) stop("run_tag cannot be empty")
+if (n_mirpathdb < 1) stop("n_mirpathdb must be >= 1")
+if (wrap_width < 10) stop("wrap_width must be >= 10")
 
 get_script_dir <- function() {
   cmd <- commandArgs(trailingOnly = FALSE)
@@ -69,36 +81,68 @@ suppressPackageStartupMessages({
   library(ggplot2)
   library(dplyr)
   library(stringr)
+  library(patchwork)  # For multi-panel combined figures
 })
 
+# ---- Publication-ready presets (explicit dimensions and styling) ----
 presets <- list(
-  single_col = list(width_mm = 85, height_mm = 65, base = 8, title = 9, axis = 8,
-                    legend = 7, ticks = 7, line = 0.6, point = 1.6, spacing_mm = 2, margin_mm = 6),
-  double_col = list(width_mm = 180, height_mm = 120, base = 8.5, title = 10, axis = 8.5,
-                    legend = 7.5, ticks = 7.5, line = 0.7, point = 1.8, spacing_mm = 2.5, margin_mm = 7),
-  presentation = list(width_mm = 254, height_mm = 143, base = 18, title = 22, axis = 18,
-                      legend = 16, ticks = 16, line = 1.5, point = 4, spacing_mm = 6, margin_mm = 10),
-  poster = list(width_mm = 508, height_mm = 356, base = 28, title = 34, axis = 28,
-                legend = 24, ticks = 24, line = 2.0, point = 6, spacing_mm = 10, margin_mm = 15)
+  single_col = list(
+    width_mm = 85, height_mm = 65, base = 8, title = 9, axis = 8,
+    legend = 7, ticks = 7, line = 0.6, point = 1.6, spacing_mm = 2,
+    margin_mm = 6, dpi_vector = 300, dpi_raster = 600
+  ),
+  double_col = list(
+    width_mm = 180, height_mm = 120, base = 8.5, title = 10, axis = 8.5,
+    legend = 7.5, ticks = 7.5, line = 0.7, point = 1.8, spacing_mm = 2.5,
+    margin_mm = 7, dpi_vector = 300, dpi_raster = 600
+  ),
+  presentation = list(
+    width_mm = 254, height_mm = 143, base = 18, title = 22, axis = 18,
+    legend = 16, ticks = 16, line = 1.5, point = 4, spacing_mm = 6,
+    margin_mm = 10, dpi_vector = 300, dpi_raster = 300
+  ),
+  poster = list(
+    width_mm = 508, height_mm = 356, base = 28, title = 34, axis = 28,
+    legend = 24, ticks = 24, line = 2.0, point = 6, spacing_mm = 10,
+    margin_mm = 15, dpi_vector = 300, dpi_raster = 300
+  )
 )
-if (!preset %in% names(presets)) stop("preset invalido: ", preset)
+if (!preset %in% names(presets)) stop("preset invalido: ", preset, " (esperado: ", paste(names(presets), collapse = ", "), ")")
 p <- presets[[preset]]
 
+# Set seed for reproducibility (affects jitter if used)
+set.seed(seed)
+
+# ---- Publication-ready theme (colorblind-safe, explicit sizing) ----
 theme_pub <- function() {
   theme_minimal(base_size = p$base, base_family = "Helvetica") +
     theme(
-      plot.title = element_text(size = p$title, face = "bold"),
-      axis.title = element_text(size = p$axis),
-      axis.text = element_text(size = p$ticks, color = "black"),
+      plot.title = element_text(size = p$title, face = "bold", hjust = 0),
+      axis.title = element_text(size = p$axis, face = "plain"),
+      axis.text.x = element_text(size = p$ticks, color = "black", angle = 0, hjust = 0.5),
+      axis.text.y = element_text(size = p$axis, color = "black"),  # Increased from ticks to axis for better readability
       strip.text = element_text(size = p$axis, face = "bold"),
-      legend.title = element_text(size = p$legend),
+      legend.title = element_text(size = p$legend, face = "bold"),
       legend.text = element_text(size = p$legend),
+      legend.position = "right",
+      legend.key.size = unit(4, "mm"),
       panel.grid.minor = element_blank(),
       panel.grid.major.y = element_blank(),
+      panel.grid.major.x = element_line(color = "grey90", linewidth = 0.3),
+      panel.border = element_blank(),
       panel.spacing = unit(p$spacing_mm, "mm"),
-      plot.margin = margin(p$margin_mm, p$margin_mm, p$margin_mm, p$margin_mm + 6, unit = "mm")
+      plot.margin = margin(p$margin_mm, p$margin_mm, p$margin_mm, p$margin_mm + 6, unit = "mm"),
+      strip.background = element_rect(fill = "grey95", color = NA)
     )
 }
+
+# ---- Colorblind-safe palette (Okabe-Ito inspired) ----
+# Enriched: green (#009E73), Depleted: orange (#D55E00), Other: grey
+colors_direction <- c(
+  "Enriched" = "#009E73",
+  "Depleted" = "#D55E00",
+  "Other" = "#999999"
+)
 
 find_latest_all <- function(root, aid_fs, run_tag) {
   dir_path <- file.path(root, aid_fs, run_tag)
@@ -163,44 +207,84 @@ order_terms <- function(df, group_col = NULL) {
   df
 }
 
-save_plot <- function(plot, out_base, n_rows = 1, width_mult = 1) {
+# ---- Deterministic export function (PDF + SVG + PNG) ----
+save_plot <- function(plot, out_base, n_rows = 1, width_mult = 1, height_mult = 1) {
   width_mm <- p$width_mm * width_mult
-  height_mm <- p$height_mm * n_rows
-  pdf_dev <- if (capabilities("cairo")) cairo_pdf else "pdf"
-  ggsave(paste0(out_base, ".pdf"), plot, width = width_mm, height = height_mm,
-         units = "mm", dpi = 300, limitsize = FALSE, device = pdf_dev)
-  svg_dev <- if (requireNamespace("svglite", quietly = TRUE)) svglite::svglite else "svg"
-  tryCatch(
-    ggsave(paste0(out_base, ".svg"), plot, width = width_mm, height = height_mm,
-           units = "mm", dpi = 300, limitsize = FALSE, device = svg_dev),
-    error = function(e) warning("No se pudo crear SVG: ", conditionMessage(e))
-  )
-  tryCatch(
-    ggsave(paste0(out_base, ".png"), plot, width = width_mm, height = height_mm,
-           units = "mm", dpi = 600, limitsize = FALSE),
-    error = function(e) warning("No se pudo crear PNG: ", conditionMessage(e))
-  )
-  if (!file.exists(paste0(out_base, ".pdf"))) {
-    warning("No se pudo crear PDF: ", out_base, ".pdf")
+  height_mm <- p$height_mm * height_mult * n_rows
+
+  # PDF with font embedding
+  pdf_dev <- if (capabilities("cairo")) cairo_pdf else pdf
+  pdf_path <- paste0(out_base, ".pdf")
+  tryCatch({
+    ggsave(pdf_path, plot, width = width_mm, height = height_mm,
+           units = "mm", dpi = p$dpi_vector, limitsize = FALSE, device = pdf_dev)
+    cat("  Exported:", pdf_path, sprintf("(%d x %d mm)\n", round(width_mm), round(height_mm)))
+  }, error = function(e) {
+    warning("Failed to create PDF: ", conditionMessage(e))
+  })
+
+  # SVG (vector, editable text)
+  svg_path <- paste0(out_base, ".svg")
+  if (requireNamespace("svglite", quietly = TRUE)) {
+    tryCatch({
+      ggsave(svg_path, plot, width = width_mm, height = height_mm,
+             units = "mm", dpi = p$dpi_vector, limitsize = FALSE, device = svglite::svglite)
+      cat("  Exported:", svg_path, "\n")
+    }, error = function(e) {
+      warning("Failed to create SVG: ", conditionMessage(e))
+    })
+  } else {
+    cat("  SKIP SVG (svglite not installed)\n")
   }
+
+  # PNG (raster, high-res)
+  png_path <- paste0(out_base, ".png")
+  tryCatch({
+    ggsave(png_path, plot, width = width_mm, height = height_mm,
+           units = "mm", dpi = p$dpi_raster, limitsize = FALSE, device = "png")
+    cat("  Exported:", png_path, sprintf("(%d dpi)\n", p$dpi_raster))
+  }, error = function(e) {
+    warning("Failed to create PNG: ", conditionMessage(e))
+  })
+
+  # Verify at least PDF was created
+  if (!file.exists(pdf_path)) {
+    stop("CRITICAL: Failed to create PDF export: ", pdf_path)
+  }
+
+  invisible(list(pdf = pdf_path, svg = svg_path, png = png_path))
 }
 
-if (!file.exists(spec_fp)) stop("No existe spec: ", spec_fp)
+# ---- Validate inputs ----
+if (!file.exists(spec_fp)) stop("Spec file not found: ", spec_fp)
 spec <- read.csv(spec_fp, check.names = FALSE)
-if (!("analysis_id" %in% names(spec))) stop("spec sin 'analysis_id'")
+if (!is.data.frame(spec) || nrow(spec) == 0) stop("Spec file is empty or invalid")
+if (!("analysis_id" %in% names(spec))) stop("Spec file missing 'analysis_id' column")
 analysis_ids <- as.character(spec$analysis_id)
+analysis_ids <- analysis_ids[nzchar(analysis_ids)]
+if (length(analysis_ids) == 0) stop("No valid analysis_ids found in spec")
 
+if (!dir.exists(in_root)) {
+  stop("Input directory not found: ", in_root, "\nCheck --in_root parameter")
+}
+
+# ---- Structured logging ----
 cat("============================================\n")
-cat("miEAA GSEA bubble plots\n")
+cat("miEAA GSEA Bubble Plots - Publication Ready\n")
+cat("============================================\n")
 cat("Timestamp:", as.character(Sys.time()), "\n")
-cat("spec:", spec_fp, "\n")
-cat("in_root:", in_root, "\n")
-cat("out_root:", out_root, "\n")
-cat("run_tag:", run_tag, "\n")
-cat("n_mirpathdb:", n_mirpathdb, "\n")
-cat("wrap_width:", wrap_width, "\n")
-cat("preset:", preset, "\n")
-cat("Log:", log_fp, "\n")
+cat("Spec file:", spec_fp, "\n")
+cat("Input root:", in_root, "\n")
+cat("Output root:", out_root, "\n")
+cat("Run tag:", run_tag, "\n")
+cat("Top N per DB:", n_mirpathdb, "\n")
+cat("Label wrap width:", wrap_width, "\n")
+cat("Preset:", preset, "\n")
+cat("Seed (reproducibility):", seed, "\n")
+cat("Figure dimensions:", sprintf("%d x %d mm", p$width_mm, p$height_mm), "\n")
+cat("DPI (vector/raster):", sprintf("%d / %d", p$dpi_vector, p$dpi_raster), "\n")
+cat("Analysis IDs:", length(analysis_ids), "\n")
+cat("Log file:", log_fp, "\n")
 cat("Log copy:", log_fp_copy, "\n")
 cat("============================================\n\n")
 
@@ -288,48 +372,113 @@ for (aid in analysis_ids) {
     next
   }
 
-  # miRPathDB 2x2
+  # ---- miRPathDB bubble plots: SEPARATE enriched vs depleted ----
   df_mirpath <- df[df$db %in% mirpath_levels, , drop = FALSE]
   df_mirpath$db <- factor(df_mirpath$db, levels = mirpath_levels)
-  df_mirpath <- df_mirpath %>%
-    group_by(db) %>%
-    arrange(pval_use, .by_group = TRUE) %>%
-    slice_head(n = n_mirpathdb) %>%
-    ungroup()
 
-  mirpath_counts <- table(df_mirpath$db)
-  cat("miRPathDB terms:", paste(names(mirpath_counts), mirpath_counts, sep = "=", collapse = ", "), "\n")
+  # Check if direction column is available
+  has_direction <- !is.na(enrich_col) && "direction" %in% names(df_mirpath) && any(df_mirpath$direction %in% c("Enriched", "Depleted"))
 
-  if (nrow(df_mirpath) > 0) {
-    df_mirpath <- order_terms(df_mirpath, group_col = "db")
-    size_range <- c(p$point * 0.8, p$point * 2.8)
-    if (!is.na(enrich_col)) {
-      color_scale <- scale_color_manual(
-        values = c(Enriched = "#009E73", Depleted = "#D55E00", Other = "#999999"),
-        name = "Direction",
-        drop = FALSE
-      )
-      p_mirpath <- ggplot(df_mirpath, aes(x = logp, y = term_plot, color = direction)) +
-        geom_point(aes(size = observed), alpha = 0.85)
-    } else {
-      color_scale <- scale_color_viridis_c(option = "D", end = 0.9, name = p_sel$source)
-      p_mirpath <- ggplot(df_mirpath, aes(x = logp, y = term_plot, color = pval_use)) +
-        geom_point(aes(size = observed), alpha = 0.85)
+  if (!has_direction) {
+    cat("WARN", aid, "-> No direction column; generating single combined plot.\n")
+    # Fallback: single plot with all terms
+    df_mirpath <- df_mirpath %>%
+      group_by(db) %>%
+      arrange(pval_use, .by_group = TRUE) %>%
+      slice_head(n = n_mirpathdb) %>%
+      ungroup()
+
+    if (nrow(df_mirpath) > 0) {
+      df_mirpath <- order_terms(df_mirpath, group_col = "db")
+      size_range <- c(p$point * 0.8, p$point * 2.8)
+      p_mirpath <- ggplot(df_mirpath, aes(x = logp, y = term_plot)) +
+        geom_point(aes(size = observed), alpha = 0.85, color = "#009E73") +
+        facet_wrap(~db, ncol = 2, drop = FALSE, scales = "free_y",
+                   labeller = labeller(db = label_wrap_gen(width = 16))) +
+        scale_y_discrete(labels = function(x) str_wrap(gsub("\\|\\|\\|.*$", "", x), width = wrap_width)) +
+        scale_size(range = size_range, name = "Observed") +
+        labs(x = paste0("-log10(", p_sel$source, ")"), y = NULL,
+             title = paste0("miRPathDB: ", aid)) +
+        theme_pub()
+
+      out_base <- file.path(out_root, run_tag, paste0("Bubble_miRPathDB_combined_", aid_fs, "_", run_tag))
+      save_plot(p_mirpath, out_base, n_rows = 2, width_mult = 1.25)
     }
-    p_mirpath <- p_mirpath +
-      facet_wrap(~db, ncol = 2, drop = FALSE, scales = "free_y",
-                 labeller = labeller(db = label_wrap_gen(width = 16))) +
-      scale_y_discrete(labels = function(x) str_wrap(gsub("\\|\\|\\|.*$", "", x), width = wrap_width)) +
-      color_scale +
-      scale_size(range = size_range, name = "Observed") +
-      labs(x = paste0("-log10(", p_sel$source, ")"), y = NULL,
-           title = paste0("miRPathDB summary: ", aid)) +
-      theme_pub()
-
-    out_base <- file.path(out_root, run_tag, paste0("Bubble_miRPathDB_2x2_", aid_fs, "_", run_tag))
-    save_plot(p_mirpath, out_base, n_rows = 2, width_mult = 1.25)
   } else {
-    cat("WARN", aid, "-> sin terminos miRPathDB para graficar.\n")
+    # ---- SEPARATE PLOTS: Enriched and Depleted ----
+    # Store plots for combined figure
+    plots_list <- list()
+
+    for (dir_type in c("Enriched", "Depleted")) {
+      df_dir <- df_mirpath %>%
+        filter(direction == dir_type) %>%
+        group_by(db) %>%
+        arrange(pval_use, .by_group = TRUE) %>%
+        slice_head(n = n_mirpathdb) %>%
+        ungroup()
+
+      dir_counts <- table(df_dir$db)
+      cat(sprintf("  %s terms: %s\n", dir_type, paste(names(dir_counts), dir_counts, sep = "=", collapse = ", ")))
+
+      if (nrow(df_dir) == 0) {
+        cat(sprintf("  SKIP %s: no terms available\n", dir_type))
+        next
+      }
+
+      # Order terms within each DB
+      df_dir <- order_terms(df_dir, group_col = "db")
+
+      # Size range for bubbles
+      size_range <- c(p$point * 0.8, p$point * 2.8)
+
+      # Color: single color per direction (no legend needed)
+      dir_color <- colors_direction[[dir_type]]
+
+      # Create plot
+      p_dir <- ggplot(df_dir, aes(x = logp, y = term_plot)) +
+        geom_point(aes(size = observed), alpha = 0.85, color = dir_color) +
+        facet_wrap(~db, ncol = 2, drop = FALSE, scales = "free_y",
+                   labeller = labeller(db = label_wrap_gen(width = 16))) +
+        scale_y_discrete(labels = function(x) str_wrap(gsub("\\|\\|\\|.*$", "", x), width = wrap_width)) +
+        scale_size(range = size_range, name = "Observed") +
+        labs(
+          x = paste0("-log10(", p_sel$source, ")"),
+          y = NULL,
+          title = paste0("miRPathDB ", dir_type, ": ", aid)
+        ) +
+        theme_pub()
+
+      # Save individual plot
+      dir_tag <- tolower(dir_type)
+      out_base <- file.path(out_root, run_tag, paste0("Bubble_miRPathDB_", dir_tag, "_", aid_fs, "_", run_tag))
+      save_plot(p_dir, out_base, n_rows = 2, width_mult = 1.25)
+      cat(sprintf("  Saved %s plot\n", dir_type))
+
+      # Store plot for combined figure
+      plots_list[[dir_type]] <- p_dir
+    }
+
+    # ---- COMBINED PLOT: Enriched + Depleted side-by-side ----
+    if (length(plots_list) == 2) {
+      cat("  Creating combined figure (Enriched + Depleted)...\n")
+
+      # Combine plots horizontally with patchwork
+      p_combined <- plots_list[["Enriched"]] + plots_list[["Depleted"]] +
+        plot_layout(guides = "collect") +
+        plot_annotation(
+          title = paste0("miRPathDB Enrichment Summary: ", aid),
+          theme = theme(
+            plot.title = element_text(size = p$title + 1, face = "bold", hjust = 0.5)
+          )
+        )
+
+      # Save combined plot (wider, 2x width for side-by-side)
+      out_base_combined <- file.path(out_root, run_tag, paste0("Bubble_miRPathDB_combined_", aid_fs, "_", run_tag))
+      save_plot(p_combined, out_base_combined, n_rows = 2, width_mult = 2.5)
+      cat("  Saved combined plot\n")
+    } else {
+      cat("  SKIP combined plot: need both Enriched and Depleted\n")
+    }
   }
 
   # QC summary
