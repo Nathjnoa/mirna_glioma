@@ -79,8 +79,6 @@ Rscript scripts/14_survGSEA_plots.R
 ## Documentation
 
 - **Computational Methods**: [docs/METHODS_scripts.md](docs/METHODS_scripts.md) - Complete pipeline documentation with parameters, outputs, and example commands
-- **Bubble Plots Guide**: [docs/10_bubble_plots_FINAL_SUMMARY.md](docs/10_bubble_plots_FINAL_SUMMARY.md) - miEAA GSEA visualization details
-- **Survival GSEA Guide**: [docs/14_survGSEA_plots_SUMMARY.md](docs/14_survGSEA_plots_SUMMARY.md) - Survival-ranked enrichment visualization
 
 ## Output Highlights
 
