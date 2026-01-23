@@ -76,17 +76,6 @@ Differential expression analysis uses the edgeR quasi-likelihood (QL) framework:
 
 **Outputs per comparison**: Complete results tables, FDR < 0.05 and FDR < 0.10 filtered tables, MD plots, and volcano plots.
 
-### Biotype-restricted Differential Expression (Script 03_2)
-
-**Script**: `03_2_edgeR_multiDE_miRNA_protCoding.R`
-
-A variant analysis restricted to biologically relevant feature types:
-
-1. **Feature filtering**: Selection of features annotated as `mirna` or `protein_coding` in the `type` column.
-2. **Analysis pipeline**: Identical quasi-likelihood framework as script 03.
-
-This restriction focuses the analysis on regulatory small RNAs and their potential protein-coding targets.
-
 ---
 
 ## D) Multiple Testing Correction
@@ -364,13 +353,6 @@ Rscript scripts/03_edgeR_multiDE.R \
   --meta data/intermediate/Metadatos_gliomas_verificados.csv \
   --spec config/de_specs.csv \
   --outdir results/DE
-
-# miRNA + protein-coding restricted DE
-Rscript scripts/03_2_edgeR_multiDE_miRNA_protCoding.R \
-  --counts data/intermediate/Gliomas_all_counts_merged.csv \
-  --meta data/intermediate/Metadatos_gliomas_verificados.csv \
-  --spec config/de_specs.csv \
-  --outdir results/DE_miRNA_protCoding
 ```
 
 ### Visualization
@@ -501,8 +483,7 @@ Rscript scripts/14_survGSEA_plots.R \
 |--------|---------|-------------|
 | `01_inspeccion_counts.R` | Count matrix QC, library sizes | Inspection figures, RDS |
 | `02_logcpm_mds.R` | Normalization, MDS | logCPM matrix, MDS coordinates |
-| `03_edgeR_multiDE.R` | Differential expression (all features) | DE tables, volcano/MD plots |
-| `03_2_edgeR_multiDE_miRNA_protCoding.R` | DE (miRNA + protein-coding) | DE tables, plots |
+| `03_edgeR_multiDE.R` | Differential expression | DE tables, volcano/MD plots |
 | `04_heatmaps_sigRNAs.R` | Clustered heatmaps | Heatmap PDFs, feature lists |
 | `05_deg_qc_plots.R` | Feature-level QC | Individual PNGs, summary PDF |
 | `06_survival_exploratory_spearman.R` | Expression-survival correlation | Correlation tables, scatter plots |

@@ -7,7 +7,7 @@ Analysis of miRNA expression in glioma with quality control, differential expres
 This project implements a comprehensive analysis pipeline for small RNA sequencing data from glioma tumor samples:
 
 1. **Quality Control** (Scripts 01-02): Count matrix inspection, TMM normalization, MDS visualization
-2. **Differential Expression** (Scripts 03-03_2): edgeR quasi-likelihood framework with multiple comparison modes
+2. **Differential Expression** (Script 03): edgeR quasi-likelihood framework with multiple comparison modes
 3. **Visualization** (Scripts 04-05): Heatmaps and feature-level QC plots
 4. **Survival Analysis** (Scripts 06-08): Spearman correlation, Cox regression, Kaplan-Meier curves
 5. **Functional Enrichment - DE-based** (Scripts 09-12): miEAA GSEA with bubble plots and QC visualizations
