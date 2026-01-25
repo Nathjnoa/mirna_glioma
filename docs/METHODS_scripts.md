@@ -783,16 +783,16 @@ logFC represents the log2-transformed ratio of expression between conditions:
 | Line | Value | Meaning |
 |------|-------|---------|
 | Horizontal dashed | -log10(0.05) ≈ 1.3 | FDR = 0.05 significance threshold |
-| Vertical dotted (right) | logFC = +1 | 2-fold upregulation threshold |
-| Vertical dotted (left) | logFC = -1 | 2-fold downregulation threshold |
+| Vertical dotted (right) | logFC = +0.584 | 1.5-fold upregulation threshold |
+| Vertical dotted (left) | logFC = -0.584 | 1.5-fold downregulation threshold |
 
 #### Color Categories
 
 | Color | Category | Criteria |
 |-------|----------|----------|
-| Orange (#D55E00) | Up-regulated | FDR < 0.05 AND logFC > 1 |
-| Blue (#0072B2) | Down-regulated | FDR < 0.05 AND logFC < -1 |
-| Pink (#CC79A7) | Significant (|logFC| < 1) | FDR < 0.05 but |logFC| ≤ 1 |
+| Orange (#D55E00) | Up-regulated | FDR < 0.05 AND logFC > 0.584 |
+| Blue (#0072B2) | Down-regulated | FDR < 0.05 AND logFC < -0.584 |
+| Pink (#CC79A7) | Significant (|logFC| < 0.584) | FDR < 0.05 but |logFC| ≤ 0.584 |
 | Gray (#999999) | Not significant | FDR ≥ 0.05 |
 
 #### Reading the Volcano Plot
@@ -806,13 +806,13 @@ logFC represents the log2-transformed ratio of expression between conditions:
 #### Subtitle Statistics
 
 The plot subtitle shows counts:
-- **Up**: Number of upregulated features (FDR < 0.05, logFC > 1)
-- **Down**: Number of downregulated features (FDR < 0.05, logFC < -1)
-- **Sig (|logFC|<1)**: Statistically significant but small effect size
+- **Up**: Number of upregulated features (FDR < 0.05, logFC > 0.584)
+- **Down**: Number of downregulated features (FDR < 0.05, logFC < -0.584)
+- **Sig (|logFC|<0.584)**: Statistically significant but small effect size
 
 #### Example Interpretation
 
-> "The volcano plot for KI67_High vs KI67_Low shows 23 upregulated and 18 downregulated miRNAs (FDR < 0.05, |logFC| > 1). hsa-miR-17-5p shows the strongest upregulation (logFC = 2.3, FDR = 1.2e-8), while hsa-miR-137 shows the strongest downregulation (logFC = -1.9, FDR = 3.4e-6). An additional 45 features are statistically significant but with modest effect sizes (|logFC| < 1)."
+> "The volcano plot for KI67_High vs KI67_Low shows 23 upregulated and 18 downregulated miRNAs (FDR < 0.05, |logFC| > 0.584). hsa-miR-17-5p shows the strongest upregulation (logFC = 2.3, FDR = 1.2e-8), while hsa-miR-137 shows the strongest downregulation (logFC = -1.9, FDR = 3.4e-6). An additional 45 features are statistically significant but with modest effect sizes (|logFC| < 0.584)."
 
 #### Caveats
 
@@ -861,4 +861,4 @@ All publication figures are exported with the following specifications:
 | Heatmap | Samples | Features | Z-score (-3 to +3) | Selected by FDR |
 | KM plot | Time (months) | Survival probability (0-1) | Log-rank p-value | p < 0.05 |
 | Bubble plot | -log10(Q-value) | Pathways | Q-value, bubble size | Q < 0.25 |
-| Volcano | logFC | -log10(FDR) | FDR, logFC | FDR < 0.05, |logFC| > 1 |
+| Volcano | logFC | -log10(FDR) | FDR, logFC | FDR < 0.05, |logFC| > 0.584 |

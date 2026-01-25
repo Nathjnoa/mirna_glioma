@@ -206,19 +206,19 @@ plot_volcano <- function(tt, analysis_fs, tag, fig_dir, ts) {
 
   # Classify genes by significance and direction
   fdr_thr <- 0.05
-  lfc_thr <- 1
+  lfc_thr <- 0.584  # log2(1.5) ≈ 0.584, corresponds to 1.5-fold change
   df_plot$category <- "Not Significant"
   df_plot$category[df_plot$pval < fdr_thr & df_plot$logFC > lfc_thr] <- "Up-regulated"
   df_plot$category[df_plot$pval < fdr_thr & df_plot$logFC < -lfc_thr] <- "Down-regulated"
-  df_plot$category[df_plot$pval < fdr_thr & abs(df_plot$logFC) <= lfc_thr] <- "Significant (|logFC| < 1)"
+  df_plot$category[df_plot$pval < fdr_thr & abs(df_plot$logFC) <= lfc_thr] <- "Significant (|logFC| < 0.584)"
   df_plot$category <- factor(df_plot$category,
                              levels = c("Up-regulated", "Down-regulated",
-                                        "Significant (|logFC| < 1)", "Not Significant"))
+                                        "Significant (|logFC| < 0.584)", "Not Significant"))
 
   # Colorblind-safe palette
   colors <- c("Up-regulated" = "#D55E00",
               "Down-regulated" = "#0072B2",
-              "Significant (|logFC| < 1)" = "#CC79A7",
+              "Significant (|logFC| < 0.584)" = "#CC79A7",
               "Not Significant" = "#999999")
 
   # Top genes to label (top 10 by significance among significant)
@@ -234,7 +234,7 @@ plot_volcano <- function(tt, analysis_fs, tag, fig_dir, ts) {
   # Count genes per category
   n_up <- sum(df_plot$category == "Up-regulated")
   n_down <- sum(df_plot$category == "Down-regulated")
-  n_sig_low <- sum(df_plot$category == "Significant (|logFC| < 1)")
+  n_sig_low <- sum(df_plot$category == "Significant (|logFC| < 0.584)")
 
   # Build plot
   p <- ggplot(df_plot, aes(x = logFC, y = neglog10p, color = category)) +
@@ -246,7 +246,7 @@ plot_volcano <- function(tt, analysis_fs, tag, fig_dir, ts) {
       x = expression(log[2]~Fold~Change),
       y = if (has_fdr) expression(-log[10]~FDR) else expression(-log[10]~P-value),
       title = paste0(analysis_fs, ": ", tag),
-      subtitle = sprintf("Up: %d | Down: %d | Sig (|logFC|<1): %d", n_up, n_down, n_sig_low)
+      subtitle = sprintf("Up: %d | Down: %d | Sig (|logFC|<0.584): %d", n_up, n_down, n_sig_low)
     ) +
     theme_classic(base_size = 14) +
     theme(
