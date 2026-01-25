@@ -666,29 +666,52 @@ Bubble plots visualize pathway enrichment results from Gene Set Enrichment Analy
 
 | Element | Encoding | Meaning |
 |---------|----------|---------|
-| X-axis | Normalized Enrichment Score (NES) | Direction and magnitude of enrichment |
+| X-axis | -log10(Q-value) or -log10(P-adjusted) | Statistical significance (higher = more significant) |
 | Y-axis | Pathway name | Ordered by significance (most significant at top) |
-| Bubble size | Number of genes in overlap | Larger = more miRNAs in pathway |
-| Bubble color | -log10(Q-value) | Darker = more significant |
+| Bubble size | Number of observed miRNAs | Larger = more miRNAs contributing to pathway |
+| Bubble color | Fixed by direction | Green = enriched, Orange = depleted |
 
-#### Normalized Enrichment Score (NES)
+#### Understanding -log10(Q-value)
 
-NES indicates the direction and strength of enrichment:
+The X-axis displays the negative log10-transformed Q-value (FDR-adjusted p-value):
 
-| NES Value | Interpretation |
-|-----------|----------------|
-| > 0 (positive) | Pathway enriched in upregulated/high-risk features |
-| < 0 (negative) | Pathway enriched in downregulated/low-risk features |
-| |NES| > 1.5 | Strong enrichment |
-| |NES| > 2.0 | Very strong enrichment |
+| -log10(Q) | Q-value | Interpretation |
+|-----------|---------|----------------|
+| 1.0 | 0.1 | Marginally significant |
+| 1.3 | 0.05 | Significant (standard threshold) |
+| 2.0 | 0.01 | Highly significant |
+| 3.0 | 0.001 | Very highly significant |
+
+**Key point**: Higher values on the X-axis indicate stronger statistical significance. Bubbles further to the right are more significant.
+
+#### Enriched vs. Depleted Panels
+
+Plots are split into two panels based on the **Normalized Enrichment Score (NES)** direction:
+
+| Panel | Color | NES Sign | Meaning |
+|-------|-------|----------|---------|
+| Enriched | Green (#009E73) | Positive | Pathways active in upregulated/high-risk miRNAs |
+| Depleted | Orange (#D55E00) | Negative | Pathways active in downregulated/low-risk miRNAs |
 
 **For DE-based GSEA** (Script 10):
-- Positive NES: Pathway enriched among miRNAs upregulated in the comparison
-- Negative NES: Pathway enriched among miRNAs downregulated in the comparison
+- **Enriched panel**: Pathways targeted by miRNAs upregulated in the comparison
+- **Depleted panel**: Pathways targeted by miRNAs downregulated in the comparison
 
 **For Survival-based GSEA** (Script 14):
-- Positive NES: Pathway enriched among miRNAs associated with worse survival (high expression → death)
-- Negative NES: Pathway enriched among miRNAs associated with better survival (high expression → protection)
+- **Enriched panel**: Pathways targeted by miRNAs associated with worse survival (high expression → death)
+- **Depleted panel**: Pathways targeted by miRNAs associated with better survival (high expression → protection)
+
+#### Bubble Size: Observed miRNAs
+
+The bubble size represents the number of miRNAs from your ranked list that are annotated to target the pathway:
+
+| Size | Interpretation |
+|------|----------------|
+| Small bubble | Few miRNAs (2-5) contribute to pathway enrichment |
+| Medium bubble | Moderate number (5-15) of miRNAs |
+| Large bubble | Many miRNAs (>15) converge on this pathway |
+
+Larger bubbles suggest more robust findings with multiple independent miRNAs.
 
 #### Significance Metrics
 
@@ -696,20 +719,6 @@ NES indicates the direction and strength of enrichment:
 |--------|-------------|-----------|
 | Q-value | FDR-adjusted p-value | < 0.25 (discovery), < 0.05 (validation) |
 | P-adjusted | Adjusted p-value (method varies) | < 0.05 |
-| -log10(Q) | Transformed for visualization | Higher = more significant |
-
-**Color scale interpretation**:
-- Lighter color: Q-value closer to threshold (less significant)
-- Darker color: Q-value much below threshold (highly significant)
-
-#### Enriched vs. Depleted Panels
-
-Plots are typically split into two panels:
-
-| Panel | Color | NES | Meaning |
-|-------|-------|-----|---------|
-| Enriched | Green (#009E73) | Positive | Pathways active in upregulated/high-risk miRNAs |
-| Depleted | Orange (#D55E00) | Negative | Pathways active in downregulated/low-risk miRNAs |
 
 #### Pathway Databases
 
@@ -722,20 +731,21 @@ Plots are typically split into two panels:
 
 #### Reading the Bubble Plot
 
-1. **Identify top pathways**: Look at the y-axis labels (top = most significant)
-2. **Check direction**: Enriched panel = upregulated direction; Depleted = downregulated
-3. **Assess significance**: Darker bubbles and more extreme NES indicate stronger signals
-4. **Consider overlap size**: Larger bubbles represent pathways with more contributing miRNAs
+1. **Check panel color**: Green = enriched (upregulated/high-risk), Orange = depleted (downregulated/low-risk)
+2. **Read X-axis position**: Further right = more statistically significant
+3. **Look at bubble size**: Larger = more miRNAs contributing to the enrichment
+4. **Identify top pathways**: Pathways at the top of the Y-axis are the most significant
 
 #### Example Interpretation
 
-> "Survival-ranked GSEA reveals significant enrichment of 'Cell cycle' (KEGG, NES = 2.1, Q = 0.008) and 'DNA replication' (Reactome, NES = 1.9, Q = 0.015) among miRNAs associated with worse survival. These pathways contain 15-20 contributing miRNAs (bubble size). Conversely, 'Immune response' pathways show depletion (NES = -1.7, Q = 0.03), suggesting protective miRNAs target immune-related processes."
+> "The enriched panel (green) shows 'Cell cycle regulation' as the most significant pathway (-log10(Q) = 2.5, Q = 0.003) with 18 contributing miRNAs (large bubble). This indicates that miRNAs upregulated in the high-KI67 group collectively target cell cycle pathways. In the depleted panel (orange), 'Neuronal differentiation' shows significance (-log10(Q) = 1.8, Q = 0.016) with 12 miRNAs, suggesting downregulated miRNAs normally target neuronal processes."
 
 #### Caveats
 
 - GSEA Q-value < 0.25 is a discovery threshold, not definitive proof
 - Pathway databases have variable curation quality
 - Redundant pathways may appear separately (e.g., "Cell cycle" in KEGG and Reactome)
+- NES values are not displayed in the plot but are used to determine direction (enriched vs depleted)
 
 ---
 
@@ -850,5 +860,5 @@ All publication figures are exported with the following specifications:
 |-------------|--------|--------|------------|--------------|
 | Heatmap | Samples | Features | Z-score (-3 to +3) | Selected by FDR |
 | KM plot | Time (months) | Survival probability (0-1) | Log-rank p-value | p < 0.05 |
-| Bubble plot | NES | Pathways | Q-value | Q < 0.25 |
+| Bubble plot | -log10(Q-value) | Pathways | Q-value, bubble size | Q < 0.25 |
 | Volcano | logFC | -log10(FDR) | FDR, logFC | FDR < 0.05, |logFC| > 1 |

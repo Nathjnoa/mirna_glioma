@@ -382,10 +382,11 @@ main_txt <- paste0(fid, " (n = ", n_low + n_high, ")")
       font.legend = c(14, "plain"),
       ggtheme = ggplot2::theme_classic(base_size = 14)
     )))
-    # Add p-value annotation in top-right corner
+    # Add p-value annotation in upper-right area (80% of x-axis)
+    x_pval <- max(df_km$time, na.rm = TRUE) * 0.80
     gp$plot <- gp$plot +
-      ggplot2::annotate("text", x = Inf, y = Inf, label = p_txt,
-                        hjust = 1.1, vjust = 1.5, size = 6, fontface = "bold")
+      ggplot2::annotate("text", x = x_pval, y = 0.82, label = p_txt,
+                        hjust = 0.5, vjust = 0.5, size = 6, fontface = "bold")
     render_plot <- function() {
       suppressMessages(suppressWarnings({
         grid::grid.newpage()
