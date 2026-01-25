@@ -50,9 +50,9 @@ make_pdf <- tolower(get_arg("--pdf", "true")) %in% c("true","t","1","yes","y")
 label_outliers <- tolower(get_arg("--label_outliers", "false")) %in% c("true","t","1","yes","y")
 n_label <- as.integer(get_arg("--n_label", "2"))
 
-width_px  <- as.integer(get_arg("--width",  "1600"))
-height_px <- as.integer(get_arg("--height", "1200"))
-res_dpi   <- as.integer(get_arg("--res",    "160"))
+width_px  <- as.integer(get_arg("--width",  "3000"))
+height_px <- as.integer(get_arg("--height", "2400"))
+res_dpi   <- as.integer(get_arg("--res",    "300"))
 
 ts <- format(Sys.time(), "%Y%m%d_%H%M%S")
 dir.create("logs", showWarnings = FALSE, recursive = TRUE)
@@ -318,51 +318,126 @@ derive_samples_and_annotation <- function(spec_row, meta_sub) {
   }
 }
 
+# ---- Publication-quality theme ----
+suppressPackageStartupMessages({
+  library(ggplot2)
+})
+
+theme_pub_qc <- function() {
+  theme_classic(base_size = 14) +
+    theme(
+      plot.title = element_text(size = 16, face = "bold", hjust = 0),
+      plot.subtitle = element_text(size = 12, color = "#555555", hjust = 0),
+      axis.title = element_text(size = 14, face = "bold"),
+      axis.text = element_text(size = 12, color = "black"),
+      legend.title = element_text(size = 12, face = "bold"),
+      legend.text = element_text(size = 11),
+      panel.grid.major = element_line(color = "grey95", linewidth = 0.3),
+      plot.margin = margin(10, 15, 10, 10, unit = "mm")
+    )
+}
+
+# Colorblind-safe palette
+colors_qc <- c("#0072B2", "#D55E00", "#009E73", "#CC79A7", "#F0E442", "#56B4E9")
+
 # ---- plotting ----
 plot_box_jitter <- function(y, group, title, subtitle = NULL, out_png) {
   samp_ids <- names(y)
   if (is.null(samp_ids)) samp_ids <- paste0("s", seq_along(y))
-  y_lim <- c(5, 15)
-  png(out_png, width = width_px, height = height_px, res = res_dpi)
-  par(mar = c(8, 5, 4, 1) + 0.1)
-  boxplot(y ~ group, main = title, ylab = "logCPM (TMM)", xlab = "",
-          las = 2, outline = FALSE, ylim = y_lim)
-  gx <- as.numeric(group)
-  jitter_x <- gx + stats::runif(length(gx), min = -0.1, max = 0.1)
-  points(jitter_x, y, pch = 16, cex = 0.8)
-  text(jitter_x, y, labels = samp_ids, pos = 3, cex = 0.7)
-  if (!is.null(subtitle)) mtext(subtitle, side = 3, line = 0.2, cex = 0.9)
-  dev.off()
+
+  df_plot <- data.frame(
+    sample_id = samp_ids,
+    expression = as.numeric(y),
+    group = as.factor(group),
+    stringsAsFactors = FALSE
+  )
+
+  # Count per group
+  n_per_group <- table(df_plot$group)
+  group_labels <- paste0(names(n_per_group), "\n(n=", as.integer(n_per_group), ")")
+  names(group_labels) <- names(n_per_group)
+
+  p <- ggplot(df_plot, aes(x = group, y = expression, fill = group)) +
+    geom_boxplot(alpha = 0.6, outlier.shape = NA, linewidth = 0.6) +
+    geom_jitter(width = 0.15, alpha = 0.8, size = 2, color = "#333333") +
+    scale_fill_manual(values = colors_qc, guide = "none") +
+    scale_x_discrete(labels = group_labels) +
+    labs(
+      x = NULL,
+      y = "logCPM (TMM normalized)",
+      title = title,
+      subtitle = if (!is.null(subtitle)) subtitle else NULL
+    ) +
+    coord_cartesian(ylim = c(4, 16)) +
+    theme_pub_qc()
+
+  # Add sample labels if few samples
+  if (nrow(df_plot) <= 30) {
+    if (requireNamespace("ggrepel", quietly = TRUE)) {
+      p <- p + ggrepel::geom_text_repel(
+        aes(label = sample_id),
+        size = 3,
+        max.overlaps = 20,
+        box.padding = 0.3,
+        segment.color = "grey50",
+        segment.size = 0.2
+      )
+    }
+  }
+
+  ggsave(out_png, p, width = 10, height = 8, dpi = 300, bg = "white")
 }
 
 plot_scatter_cont <- function(x, y, feat, title, out_png, label_outliers = FALSE, n_label = 2) {
-  ok <- is.finite(x) & is.finite(y)
-  x <- x[ok]; y <- y[ok]
-  if (length(x) < 5) return(invisible(NULL))
+  samp_ids <- names(y)
+  if (is.null(samp_ids)) samp_ids <- paste0("s", seq_along(y))
 
-  sp <- suppressWarnings(stats::cor.test(x, y, method = "spearman", exact = FALSE))
+  ok <- is.finite(x) & is.finite(y)
+  if (sum(ok) < 5) return(invisible(NULL))
+
+  df_plot <- data.frame(
+    sample_id = samp_ids[ok],
+    x = as.numeric(x[ok]),
+    y = as.numeric(y[ok]),
+    stringsAsFactors = FALSE
+  )
+
+  # Correlation
+  sp <- suppressWarnings(stats::cor.test(df_plot$x, df_plot$y, method = "spearman", exact = FALSE))
   rho <- unname(sp$estimate)
   pval <- sp$p.value
-  y_lim <- c(5, 15)
 
-  png(out_png, width = width_px, height = height_px, res = res_dpi)
-  par(mar = c(5, 5, 4, 1) + 0.1)
+  # Format p-value
+  p_txt <- if (pval < 0.001) "p < 0.001" else sprintf("p = %.3f", pval)
 
-  plot(x, y, pch = 16, xlab = title, ylab = "logCPM (TMM)", main = feat, ylim = y_lim)
-  text(x, y, labels = names(y), pos = 3, cex = 0.7)
-  abline(stats::lm(y ~ x), lwd = 2)
-  mtext(sprintf("Spearman rho=%.3f, p=%.3g, n=%d", rho, pval, length(x)),
-        side = 3, line = 0.2, cex = 0.95)
+  p <- ggplot(df_plot, aes(x = x, y = y)) +
+    geom_point(alpha = 0.8, size = 2.5, color = "#0072B2") +
+    geom_smooth(method = "lm", se = TRUE, color = "#D55E00", fill = "#D55E0030", linewidth = 1) +
+    labs(
+      x = title,
+      y = "logCPM (TMM normalized)",
+      title = feat,
+      subtitle = sprintf("Spearman rho = %.3f, %s, n = %d", rho, p_txt, nrow(df_plot))
+    ) +
+    coord_cartesian(ylim = c(4, 16)) +
+    theme_pub_qc()
 
-  if (label_outliers) {
-    # etiqueta los puntos con residuales más extremos respecto a la recta
-    fit <- stats::lm(y ~ x)
-    res <- abs(stats::residuals(fit))
-    kk <- order(res, decreasing = TRUE)[seq_len(min(n_label, length(res)))]
-    text(x[kk], y[kk], labels = names(y)[kk], pos = 3, cex = 0.9)
+  # Add sample labels if few samples
+  if (nrow(df_plot) <= 30) {
+    if (requireNamespace("ggrepel", quietly = TRUE)) {
+      p <- p + ggrepel::geom_text_repel(
+        aes(label = sample_id),
+        size = 3,
+        max.overlaps = 15,
+        box.padding = 0.3,
+        segment.color = "grey50",
+        segment.size = 0.2
+      )
+    }
   }
-  dev.off()
-  invisible(list(rho = rho, p = pval, n = length(x)))
+
+  ggsave(out_png, p, width = 10, height = 8, dpi = 300, bg = "white")
+  invisible(list(rho = rho, p = pval, n = nrow(df_plot)))
 }
 
 # ---- loop analyses ----

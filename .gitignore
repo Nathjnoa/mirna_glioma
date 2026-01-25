@@ -1,7 +1,16 @@
-# Data and results (reproducible from scripts)
+# Data (large/sensitive - not tracked)
 data/
-results/
+
+# Results - exclude tables and intermediate, but track publication figures
+results/tables/
+results/DE/
 logs/
+
+# Track publication-quality figures (PNG and PDF)
+!results/figures/
+!results/figures/**/*.png
+!results/figures/**/*.pdf
+!results/figures/**/*.svg
 
 # R / RStudio
 .Rhistory

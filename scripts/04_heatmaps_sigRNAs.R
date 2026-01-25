@@ -40,9 +40,9 @@ fdrs <- fdrs[is.finite(fdrs) & fdrs > 0 & fdrs < 1]
 if (length(fdrs) == 0) stop("No hay FDRs válidos en --fdrs")
 
 max_features <- as.integer(get_arg("--max_features", "200"))  # si hay demasiados, toma top por FDR
-width_px  <- as.integer(get_arg("--width",  "2000"))
-height_px <- as.integer(get_arg("--height", "1600"))
-res_dpi   <- as.integer(get_arg("--res",    "150"))
+width_px  <- as.integer(get_arg("--width",  "3000"))
+height_px <- as.integer(get_arg("--height", "2400"))
+res_dpi   <- as.integer(get_arg("--res",    "300"))
 
 ts <- format(Sys.time(), "%Y%m%d_%H%M%S")
 dir.create("logs", showWarnings = FALSE, recursive = TRUE)
@@ -335,21 +335,48 @@ plot_heatmap <- function(z, annotation_col, out_png, main_title) {
     hc_rows <- stats::hclust(d_rows, method = "complete")
   }
 
+  # Publication-quality color palette (blue-white-red)
+  col_fun <- circlize::colorRamp2(c(-2, 0, 2), c("#2166AC", "white", "#B2182B"))
+
   top_ha <- NULL
   if (!is.null(annotation_col)) {
-    top_ha <- ComplexHeatmap::HeatmapAnnotation(df = annotation_col)
+    # Rename columns to English and set larger font
+    if ("group" %in% colnames(annotation_col)) {
+      colnames(annotation_col)[colnames(annotation_col) == "group"] <- "Group"
+    }
+    if ("value" %in% colnames(annotation_col)) {
+      colnames(annotation_col)[colnames(annotation_col) == "value"] <- "Value"
+    }
+    top_ha <- ComplexHeatmap::HeatmapAnnotation(
+      df = annotation_col,
+      annotation_name_gp = grid::gpar(fontsize = 14, fontface = "bold"),
+      annotation_legend_param = list(
+        labels_gp = grid::gpar(fontsize = 12),
+        title_gp = grid::gpar(fontsize = 14, fontface = "bold")
+      )
+    )
   }
 
   png(out_png, width = width_px, height = height_px, res = res_dpi)
   ht <- ComplexHeatmap::Heatmap(
     z,
-    name = "Z",
+    name = "Z-score",
+    col = col_fun,
     cluster_rows = if (cluster_rows) hc_rows else FALSE,
     cluster_columns = FALSE,
     show_row_names = (nrow(z) <= 80),
     show_column_names = TRUE,
-    top_annotation = top_ha,
-    column_title = main_title
+    row_names_gp = grid::gpar(fontsize = 10),
+    column_names_gp = grid::gpar(fontsize = 10),
+    column_title = main_title,
+    column_title_gp = grid::gpar(fontsize = 16, fontface = "bold"),
+    heatmap_legend_param = list(
+      title = "Z-score",
+      title_gp = grid::gpar(fontsize = 14, fontface = "bold"),
+      labels_gp = grid::gpar(fontsize = 12),
+      legend_height = grid::unit(4, "cm")
+    ),
+    top_annotation = top_ha
   )
   ComplexHeatmap::draw(ht, heatmap_legend_side = "right", annotation_legend_side = "right")
   dev.off()
@@ -478,9 +505,9 @@ for (i in seq_len(nrow(spec))) {
 
     out_png <- file.path(out_dir, paste0("heatmap_Z_FDR", gsub("\\.", "", sprintf("%.2g", thr)), "_", ts, ".png"))
     main_title <- if (mode == "continuous") {
-      paste0(analysis_id, " | Z-score (logCPM) | FDR<", thr, " | ordered by ", s$var)
+      paste0(analysis_id, " | Z-score (logCPM) | FDR < ", thr, " | Ordered by ", s$var)
     } else {
-      paste0(analysis_id, " | Z-score (logCPM) | FDR<", thr)
+      paste0(analysis_id, " | Z-score (logCPM) | FDR < ", thr)
     }
 
     plot_heatmap(z, ann_col, out_png, main_title)

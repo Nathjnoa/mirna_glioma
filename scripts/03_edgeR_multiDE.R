@@ -183,20 +183,108 @@ plot_volcano <- function(tt, analysis_fs, tag, fig_dir, ts) {
   has_p <- "PValue" %in% colnames(tt)
   if (!has_fdr && !has_p) return()
 
-  yvals <- if (has_fdr) tt$FDR else tt$PValue
-  yvals <- pmax(yvals, .Machine$double.xmin)
-  neglog <- -log10(yvals)
-  sig <- if (has_fdr) tt$FDR < 0.05 else rep(FALSE, nrow(tt))
-  png(file.path(fig_dir, paste0("Volcano_", analysis_fs, "_", tag, "_", ts, ".png")),
-      width = 1400, height = 1000, res = 150)
-  plot(tt$logFC, neglog,
-       xlab = "logFC",
-       ylab = if (has_fdr) "-log10(FDR)" else "-log10(PValue)",
-       main = paste0("Volcano: ", analysis_fs, " ", tag),
-       pch = ifelse(sig, 16, 1), col = ifelse(sig, "red", "black"))
-  abline(h = -log10(0.10), col = "blue", lty = 2)
-  abline(v = c(-1, 1), col = "gray", lty = 3)
-  dev.off()
+  # Load ggplot2 and ggrepel for publication-quality plots
+  suppressPackageStartupMessages({
+    if (!requireNamespace("ggplot2", quietly = TRUE)) {
+      cat("WARN: ggplot2 not available, skipping volcano plot\n")
+      return()
+    }
+    library(ggplot2)
+  })
+
+  # Prepare data
+  df_plot <- data.frame(
+    feature_id = tt$feature_id,
+    logFC = as.numeric(tt$logFC),
+    pval = if (has_fdr) as.numeric(tt$FDR) else as.numeric(tt$PValue),
+    stringsAsFactors = FALSE
+  )
+  df_plot <- df_plot[is.finite(df_plot$logFC) & is.finite(df_plot$pval), ]
+  if (nrow(df_plot) == 0) return()
+
+  df_plot$neglog10p <- -log10(pmax(df_plot$pval, .Machine$double.xmin))
+
+  # Classify genes by significance and direction
+  fdr_thr <- 0.05
+  lfc_thr <- 1
+  df_plot$category <- "Not Significant"
+  df_plot$category[df_plot$pval < fdr_thr & df_plot$logFC > lfc_thr] <- "Up-regulated"
+  df_plot$category[df_plot$pval < fdr_thr & df_plot$logFC < -lfc_thr] <- "Down-regulated"
+  df_plot$category[df_plot$pval < fdr_thr & abs(df_plot$logFC) <= lfc_thr] <- "Significant (|logFC| < 1)"
+  df_plot$category <- factor(df_plot$category,
+                             levels = c("Up-regulated", "Down-regulated",
+                                        "Significant (|logFC| < 1)", "Not Significant"))
+
+  # Colorblind-safe palette
+  colors <- c("Up-regulated" = "#D55E00",
+              "Down-regulated" = "#0072B2",
+              "Significant (|logFC| < 1)" = "#CC79A7",
+              "Not Significant" = "#999999")
+
+  # Top genes to label (top 10 by significance among significant)
+  df_sig <- df_plot[df_plot$pval < fdr_thr, ]
+  if (nrow(df_sig) > 0) {
+    df_sig <- df_sig[order(df_sig$pval), ]
+    top_genes <- head(df_sig$feature_id, 10)
+    df_plot$label <- ifelse(df_plot$feature_id %in% top_genes, df_plot$feature_id, NA)
+  } else {
+    df_plot$label <- NA
+  }
+
+  # Count genes per category
+  n_up <- sum(df_plot$category == "Up-regulated")
+  n_down <- sum(df_plot$category == "Down-regulated")
+  n_sig_low <- sum(df_plot$category == "Significant (|logFC| < 1)")
+
+  # Build plot
+  p <- ggplot(df_plot, aes(x = logFC, y = neglog10p, color = category)) +
+    geom_point(alpha = 0.7, size = 1.5) +
+    scale_color_manual(values = colors, name = "Category", drop = FALSE) +
+    geom_hline(yintercept = -log10(fdr_thr), linetype = "dashed", color = "#333333", linewidth = 0.5) +
+    geom_vline(xintercept = c(-lfc_thr, lfc_thr), linetype = "dotted", color = "#666666", linewidth = 0.4) +
+    labs(
+      x = expression(log[2]~Fold~Change),
+      y = if (has_fdr) expression(-log[10]~FDR) else expression(-log[10]~P-value),
+      title = paste0(analysis_fs, ": ", tag),
+      subtitle = sprintf("Up: %d | Down: %d | Sig (|logFC|<1): %d", n_up, n_down, n_sig_low)
+    ) +
+    theme_classic(base_size = 14) +
+    theme(
+      plot.title = element_text(size = 16, face = "bold", hjust = 0),
+      plot.subtitle = element_text(size = 12, color = "#555555", hjust = 0),
+      axis.title = element_text(size = 14, face = "bold"),
+      axis.text = element_text(size = 12, color = "black"),
+      legend.title = element_text(size = 12, face = "bold"),
+      legend.text = element_text(size = 11),
+      legend.position = "right",
+      panel.grid.major = element_line(color = "grey95", linewidth = 0.3),
+      plot.margin = margin(10, 15, 10, 10, unit = "mm")
+    )
+
+  # Add labels if ggrepel available
+  if (requireNamespace("ggrepel", quietly = TRUE) && any(!is.na(df_plot$label))) {
+    p <- p + ggrepel::geom_text_repel(
+      aes(label = label),
+      size = 3.5,
+      max.overlaps = 15,
+      box.padding = 0.5,
+      point.padding = 0.3,
+      segment.color = "grey50",
+      segment.size = 0.3,
+      na.rm = TRUE,
+      show.legend = FALSE
+    )
+  }
+
+  # Export high-resolution PNG (300 DPI)
+  out_png <- file.path(fig_dir, paste0("Volcano_", analysis_fs, "_", tag, "_", ts, ".png"))
+  ggsave(out_png, p, width = 10, height = 8, dpi = 300, bg = "white")
+  cat("  -> Volcano:", out_png, "\n")
+
+  # Also export PDF for publication
+  out_pdf <- file.path(fig_dir, paste0("Volcano_", analysis_fs, "_", tag, "_", ts, ".pdf"))
+  pdf_dev <- if (capabilities("cairo")) cairo_pdf else pdf
+  ggsave(out_pdf, p, width = 10, height = 8, device = pdf_dev)
 }
 
 # -----------------------------

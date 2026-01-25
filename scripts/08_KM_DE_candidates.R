@@ -242,8 +242,9 @@ cat("Candidatos presentes en logCPM:", length(candidates_in), "/", length(candid
 if (length(candidates_in) == 0) stop("0 candidatos presentes en la matriz de expresión.")
 
 # ---- KM loop ----
+# Publication-quality PDF settings
 pdf_fp <- file.path(fig_dir, paste0("KM_curves_DE_candidates_", ts, ".pdf"))
-pdf(pdf_fp, width = 8.5, height = 6.5)
+pdf(pdf_fp, width = 10, height = 8, family = "sans")
 
 km_rows <- list()
 n_plotted <- 0
@@ -332,38 +333,59 @@ for (fid in candidates_in) {
   }
 
   if (km_cut == "median") {
-    cut_txt <- paste0("cut(median)=", sprintf("%.3f", cut_val))
-    lab_low <- "Low (<= median)"
-    lab_high <- "High (> median)"
+    cut_txt <- paste0("Median = ", sprintf("%.3f", cut_val))
+    lab_low <- "Low Expression"
+    lab_high <- "High Expression"
   } else if (km_cut == "terciles_extremos") {
-    cut_txt <- paste0("q1=", sprintf("%.3f", cut_low), ";q2=", sprintf("%.3f", cut_high))
-    lab_low <- "Low (<= q1)"
-    lab_high <- "High (>= q2)"
+    cut_txt <- paste0("T1 = ", sprintf("%.3f", cut_low), "; T2 = ", sprintf("%.3f", cut_high))
+    lab_low <- "Low (T1)"
+    lab_high <- "High (T3)"
   } else if (km_cut == "cuartiles_extremos") {
-    cut_txt <- paste0("q1=", sprintf("%.3f", cut_low), ";q3=", sprintf("%.3f", cut_high))
-    lab_low <- "Low (<= q1)"
-    lab_high <- "High (>= q3)"
+    cut_txt <- paste0("Q1 = ", sprintf("%.3f", cut_low), "; Q3 = ", sprintf("%.3f", cut_high))
+    lab_low <- "Low (Q1)"
+    lab_high <- "High (Q4)"
   } else {
-    cut_txt <- "cut=NA"
+    cut_txt <- "Cut = NA"
     lab_low <- "Low"
     lab_high <- "High"
   }
 
-  main_txt <- paste0(fid, " | ", km_cut,
-                     " | nLow=", n_low, " nHigh=", n_high,
-                     " dropped=", n_dropped_middle,
-                     " | ", cut_txt,
-                     " | log-rank p=", format(p_lr, digits = 3))
+  # Simplified English title for publication
+
+main_txt <- paste0(fid, " (n = ", n_low + n_high, ")")
+
+  # Format p-value for display
+  p_txt <- if (p_lr < 0.001) {
+    "p < 0.001"
+  } else {
+    paste0("p = ", sprintf("%.3f", p_lr))
+  }
 
   if (use_survminer) {
     gp <- suppressMessages(suppressWarnings(survminer::ggsurvplot(
       sf, data = df_km,
       risk.table = TRUE,
-      pval = TRUE,
-      legend.title = "",
+      risk.table.col = "strata",
+      risk.table.height = 0.25,
+      pval = FALSE,  # We'll add p-value manually in top-right
+      conf.int = FALSE,
+      palette = c("#0072B2", "#D55E00"),  # Colorblind-safe
+      legend.title = "Expression",
       legend.labs = c(lab_low, lab_high),
-      title = main_txt
+      title = main_txt,
+      xlab = "Time (months)",
+      ylab = "Survival Probability",
+      font.main = c(18, "bold"),
+      font.x = c(16, "bold"),
+      font.y = c(16, "bold"),
+      font.tickslab = c(14, "plain"),
+      font.legend = c(14, "plain"),
+      ggtheme = ggplot2::theme_classic(base_size = 14)
     )))
+    # Add p-value annotation in top-right corner
+    gp$plot <- gp$plot +
+      ggplot2::annotate("text", x = Inf, y = Inf, label = p_txt,
+                        hjust = 1.1, vjust = 1.5, size = 6, fontface = "bold")
     render_plot <- function() {
       suppressMessages(suppressWarnings({
         grid::grid.newpage()
@@ -372,15 +394,20 @@ for (fid in candidates_in) {
     }
   } else {
     render_plot <- function() {
-      plot(sf, main = main_txt, xlab = time_var, ylab = "Survival probability", lwd = 2)
-      legend("bottomleft", legend = c(lab_low, lab_high), lwd = 2, bty = "n")
-      mtext(paste0("log-rank p=", format(p_lr, digits=3)), side = 3, line = 0.2, cex = 0.9)
+      par(mar = c(5, 5, 4, 2) + 0.1, cex.lab = 1.4, cex.axis = 1.2, cex.main = 1.5)
+      plot(sf, main = main_txt, xlab = "Time (months)", ylab = "Survival Probability",
+           lwd = 3, col = c("#0072B2", "#D55E00"))
+      legend("bottomleft", legend = c(lab_low, lab_high), lwd = 3,
+             col = c("#0072B2", "#D55E00"), bty = "n", cex = 1.3)
+      # p-value in top-right corner
+      legend("topright", legend = p_txt, bty = "n", cex = 1.4, text.font = 2)
     }
   }
   render_plot()
 
+  # High-resolution PNG export
   png_fp <- file.path(fig_dir, paste0("KM_", safe_name(fid), "_", ts, ".png"))
-  png(png_fp, width = 1600, height = 1200, res = 150)
+  png(png_fp, width = 3000, height = 2400, res = 300)
   render_plot()
   dev.off()
 
