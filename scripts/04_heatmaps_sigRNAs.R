@@ -16,6 +16,18 @@ safe_name <- function(x) {
   x
 }
 
+# Translate Spanish terms to English for figure titles
+translate_to_english <- function(text) {
+  # Analysis ID translations
+  text <- gsub("GENERO", "GENDER", text, fixed = TRUE)
+  text <- gsub("EDAD", "AGE", text, fixed = TRUE)
+  text <- gsub("SEGUIM", "FOLLOWUP", text, fixed = TRUE)
+  text <- gsub("RESECCION", "RESECTION", text, fixed = TRUE)
+  text <- gsub("SINAPTOFISINA", "SYNAPTOPHYSIN", text, fixed = TRUE)
+  text <- gsub("MESES_SEGUIMIENTO_", "FOLLOWUP_MONTHS", text, fixed = TRUE)
+  text
+}
+
 read_table <- function(path) {
   if (requireNamespace("data.table", quietly = TRUE)) {
     data.table::fread(path, data.table = FALSE, check.names = FALSE)
@@ -505,9 +517,9 @@ for (i in seq_len(nrow(spec))) {
 
     out_png <- file.path(out_dir, paste0("heatmap_Z_FDR", gsub("\\.", "", sprintf("%.2g", thr)), "_", ts, ".png"))
     main_title <- if (mode == "continuous") {
-      paste0(analysis_id, " | Z-score (logCPM) | FDR < ", thr, " | Ordered by ", s$var)
+      translate_to_english(paste0(analysis_id, " | Z-score (logCPM) | FDR < ", thr, " | Ordered by ", s$var))
     } else {
-      paste0(analysis_id, " | Z-score (logCPM) | FDR < ", thr)
+      translate_to_english(paste0(analysis_id, " | Z-score (logCPM) | FDR < ", thr))
     }
 
     plot_heatmap(z, ann_col, out_png, main_title)
