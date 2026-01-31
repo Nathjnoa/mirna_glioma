@@ -241,6 +241,25 @@ Publication-ready visualization of survival-ranked GSEA results:
 - `SurvivalRank_Categories_pvals_Q_*.{pdf,svg,png}`
 - `SurvivalRank_Categories_pvals_Padj_*.{pdf,svg,png}`
 
+### GO Term Redundancy Reduction (Script 16)
+
+**Script**: `16_survGSEA_reduce_redundancy.R`
+
+Reduction of redundant Gene Ontology terms from survival-ranked GSEA results using semantic similarity:
+
+1. **GO ID mapping**: GO term names are mapped to GO identifiers via `GO.db`. Unmapped terms are retained without modification.
+2. **Semantic similarity**: Pairwise semantic similarity between GO terms is computed using the Rel (relevance) measure with `rrvgo::calculateSimMatrix` and the `org.Hs.eg.db` annotation database.
+3. **Redundancy reduction**: Terms are clustered at a similarity threshold of 0.9; a representative parent term is retained from each cluster based on −log₁₀(adjusted p-value) scores via `rrvgo::reduceSimMatrix`.
+4. **Ontology-specific processing**: GO Biological Process and GO Molecular Function terms are processed independently, with enriched and depleted directions handled separately.
+5. **Pass-through databases**: KEGG and Reactome terms are retained without reduction as they lack the hierarchical structure required for semantic similarity–based simplification.
+6. **Visualization**: Regenerated bubble plots from the reduced term set using the same styling conventions as script 14.
+
+**Outputs**:
+- `miEAA_GSEA_reduced_rrvgo_*.tsv`: Reduced enrichment table (redundant GO terms removed).
+- `miEAA_GSEA_full_rrvgo_annotated_*.tsv`: Full table with rrvgo cluster annotations.
+- `reduction_summary_*.md`: Summary of reduction statistics.
+- Regenerated bubble plots (PDF/SVG/PNG) in `reduced_rrvgo/` subdirectories.
+
 ---
 
 ## G) Visualization and QC
@@ -287,6 +306,7 @@ Individual feature-level quality control:
 | circlize | 0.4.17 | Circular visualization, color functions |
 | survival | 3.8.3 | Cox regression, Kaplan-Meier |
 | rbioapi | 0.8.3 | miEAA API access |
+| rrvgo | 1.18.0 | GO term redundancy reduction |
 | ggplot2 | 4.0.1 | Grammar of graphics visualization |
 | patchwork | 1.3.2 | Multi-panel figure assembly |
 
@@ -450,6 +470,12 @@ Rscript scripts/14_survGSEA_plots.R \
   --run_tag SurvivalRank_CoxZ_miRPathDB \
   --n_mirpathdb 12 \
   --preset double_col
+
+# GO term redundancy reduction
+Rscript scripts/16_survGSEA_reduce_redundancy.R \
+  --sim_threshold 0.9 \
+  --sim_method Rel \
+  --run_tag SurvivalRank_CoxZ_miRPathDB
 ```
 
 ---
@@ -472,6 +498,8 @@ Rscript scripts/14_survGSEA_plots.R \
 | `km_cut` | Kaplan-Meier group stratification | median |
 | `min_group_n` | Minimum samples per KM group | 5 |
 | `scale_expr` | Standardize expression in Cox models | TRUE |
+| `sim_threshold` | rrvgo semantic similarity threshold | 0.9 |
+| `sim_method` | rrvgo similarity measure | Rel |
 | `preset` | Figure dimension preset | `double_col` |
 | `seed` | Random seed for reproducibility | 42 |
 
@@ -495,6 +523,7 @@ Rscript scripts/14_survGSEA_plots.R \
 | `12_miEAA_GSEA_categories_pvals.R` | Category distributions | PDF/SVG/PNG figures |
 | `13_survGSEA.R` | GSEA (survival-ranked) | Cox tables, GSEA results |
 | `14_survGSEA_plots.R` | Survival GSEA visualization | PDF/SVG/PNG figures |
+| `16_survGSEA_reduce_redundancy.R` | GO term redundancy reduction (rrvgo) | Reduced tables, bubble plots |
 
 ---
 

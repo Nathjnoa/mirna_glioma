@@ -348,7 +348,6 @@ if (nrow(df) == 0) stop("Sin filas validas tras filtros.")
 
 mirpath_levels <- c(
   "GO Biological process (miRPathDB)",
-  "GO Molecular function (miRPathDB)",
   "KEGG (miRPathDB)",
   "Reactome (miRPathDB)"
 )

@@ -339,13 +339,6 @@ plot(mds$x, mds$y,
 text(mds$x, mds$y, labels = colnames(logcpm_post), pos = 3, cex = 0.7)
 dev.off()
 
-# Plot MDS (sin etiquetas, por si queda muy cargado)
-png(file.path(fig_dir, paste0("03_MDS_logCPM_points_", ts, ".png")), width = 1400, height = 1000, res = 150)
-plot(mds$x, mds$y,
-     xlab = "MDS1", ylab = "MDS2",
-     main = paste0("MDS (logCPM, TMM) | top=", top_n))
-dev.off()
-
 cat("============================================\n")
 cat("FIN\n")
 cat("- Log:", log_fp, "\n")
