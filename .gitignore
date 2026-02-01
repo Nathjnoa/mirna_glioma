@@ -6,11 +6,20 @@ results/tables/
 results/DE/
 logs/
 
-# Track publication-quality figures (PNG and PDF)
+# Track publication-quality figures (PNG only)
 !results/figures/
 !results/figures/**/*.png
-!results/figures/**/*.pdf
-!results/figures/**/*.svg
+
+# Exclude PDF/SVG from survGSEA (large vectors, PNG sufficient for repo)
+results/figures/SurvivalRank_GSEA/**/*.pdf
+results/figures/SurvivalRank_GSEA/**/*.svg
+
+# Exclude KM figures (exploratory, not final)
+results/figures/KM_DE_candidates/
+
+# Exclude survival exploratory scripts (not in final pipeline)
+scripts/06_survival_exploratory_spearman.R
+scripts/07_survival_cox_univariate.R
 
 # R / RStudio
 .Rhistory

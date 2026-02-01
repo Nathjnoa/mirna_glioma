@@ -152,33 +152,6 @@ Distribution analysis of significance across pathway categories:
 
 ## F) Survival Analysis
 
-### Exploratory Correlation Analysis (Script 06)
-
-**Script**: `06_survival_exploratory_spearman.R`
-
-Spearman rank correlation between expression and survival time:
-
-1. **Feature selection**: Union of features with FDR < threshold across all differential expression comparisons.
-2. **Correlation metrics**:
-   - **All samples**: Spearman correlation including both events and censored observations (`rho_all`, `p_all`, `n_all`).
-   - **Events only**: Restricted to patients with recorded death (`MUERTE = 1`) to assess within-event trends (`rho_event`, `p_event`, `n_event`).
-3. **Visualization**: Scatter plots with filled points for events, open circles for censored observations, linear regression trend line, and LOESS smoothing curve (both for illustration only).
-
-**Note**: This analysis is exploratory and does not account for censoring in the statistical test.
-
-### Cox Proportional Hazards Modeling (Script 07)
-
-**Script**: `07_survival_cox_univariate.R`
-
-Univariate Cox regression for survival association:
-
-1. **Feature selection**: Union of differentially expressed features (FDR < threshold).
-2. **Model specification**: `Surv(time, event) ~ expression` using `survival::coxph` with time variable (`MESES_SEGUIMIENTO_`) and event indicator (`MUERTE`).
-3. **Expression scaling**: Optional standardization for hazard ratio interpretation per standard deviation.
-4. **Multiple testing correction**: FDR adjustment (Benjamini-Hochberg).
-
-**Outputs**: Hazard ratios with 95% confidence intervals, p-values, FDR-adjusted p-values, and membership tables.
-
 ### Kaplan-Meier Analysis (Script 08)
 
 **Script**: `08_KM_DE_candidates.R`
@@ -249,7 +222,18 @@ Reduction of redundant Gene Ontology terms from survival-ranked GSEA results usi
 
 1. **GO ID mapping**: GO term names are mapped to GO identifiers via `GO.db`. Unmapped terms are retained without modification.
 2. **Semantic similarity**: Pairwise semantic similarity between GO terms is computed using the Rel (relevance) measure with `rrvgo::calculateSimMatrix` and the `org.Hs.eg.db` annotation database.
-3. **Redundancy reduction**: Terms are clustered at a similarity threshold of 0.9; a representative parent term is retained from each cluster based on −log₁₀(adjusted p-value) scores via `rrvgo::reduceSimMatrix`.
+3. **Redundancy reduction**: A distance matrix is computed as (1 − similarity) and terms are hierarchically clustered (complete linkage). The dendrogram is cut at a height threshold via `rrvgo::reduceSimMatrix`; higher thresholds produce larger clusters and more aggressive reduction. A representative term is retained per cluster based on −log₁₀(adjusted p-value) scores.
+
+   **Threshold calibration on study data** (from 2793 total terms, 1979 GO):
+
+   | Threshold | rrvgo level | Terms remaining | GO terms removed | % GO reduction |
+   |-----------|-------------|-----------------|------------------|----------------|
+   | 0.9 | Large | 1229 | 1564 | 79% |
+   | 0.7 | Medium (default) | 1364 | 1429 | 72% |
+   | 0.5 | Small | 1540 | 1253 | 63% |
+   | 0.4 | Tiny | 1657 | 1136 | 57% |
+
+   A threshold of **0.9** was selected for the final analysis.
 4. **Ontology-specific processing**: GO Biological Process and GO Molecular Function terms are processed independently, with enriched and depleted directions handled separately.
 5. **Pass-through databases**: KEGG and Reactome terms are retained without reduction as they lack the hierarchical structure required for semantic similarity–based simplification.
 6. **Visualization**: Regenerated bubble plots from the reduced term set using the same styling conventions as script 14.
@@ -396,22 +380,6 @@ Rscript scripts/05_deg_qc_plots.R \
 ### Survival Analysis
 
 ```bash
-# Exploratory Spearman correlation
-Rscript scripts/06_survival_exploratory_spearman.R \
-  --counts data/intermediate/Gliomas_all_counts_merged.csv \
-  --meta data/intermediate/Metadatos_gliomas_verificados.csv \
-  --spec config/de_specs.csv \
-  --de_dir results/DE \
-  --fdr 0.1
-
-# Cox univariate regression
-Rscript scripts/07_survival_cox_univariate.R \
-  --counts data/intermediate/Gliomas_all_counts_merged.csv \
-  --meta data/intermediate/Metadatos_gliomas_verificados.csv \
-  --spec config/de_specs.csv \
-  --de_dir results/DE \
-  --fdr 0.1
-
 # Kaplan-Meier curves
 Rscript scripts/08_KM_DE_candidates.R \
   --counts data/intermediate/Gliomas_all_counts_merged.csv \
@@ -514,8 +482,6 @@ Rscript scripts/16_survGSEA_reduce_redundancy.R \
 | `03_edgeR_multiDE.R` | Differential expression | DE tables, volcano/MD plots |
 | `04_heatmaps_sigRNAs.R` | Clustered heatmaps | Heatmap PDFs, feature lists |
 | `05_deg_qc_plots.R` | Feature-level QC | Individual PNGs, summary PDF |
-| `06_survival_exploratory_spearman.R` | Expression-survival correlation | Correlation tables, scatter plots |
-| `07_survival_cox_univariate.R` | Cox regression | HR tables with CI and FDR |
 | `08_KM_DE_candidates.R` | Kaplan-Meier analysis | KM curves, summary tables |
 | `09_miEAA_GSEA_all_comparisons.R` | GSEA (DE-based) | GSEA tables, ranked lists |
 | `10_miEAA_GSEA_bubble_plots.R` | Bubble plot visualization | PDF/SVG/PNG figures |
