@@ -214,6 +214,29 @@ Publication-ready visualization of survival-ranked GSEA results:
 - `SurvivalRank_Categories_pvals_Q_*.{pdf,svg,png}`
 - `SurvivalRank_Categories_pvals_Padj_*.{pdf,svg,png}`
 
+### GSEA Enrichment Plot (Script 15)
+
+**Script**: `15_survGSEA_enrichment_plot.R`
+
+Classic running-sum enrichment plot for a selected pathway from survival-ranked GSEA results:
+
+1. **Input**: Cox regression table (ranked miRNAs by Wald z-statistic) and miEAA GSEA results from script 13.
+2. **Term selection**: Filters by pathway category (default: GO Biological Process), enrichment direction (default: depleted), and significance (P-adjusted ≤ cutoff). The most significant term is selected, or a specific term can be queried via `--term`.
+3. **Running enrichment score**: Weighted running-sum statistic computed from the ranked miRNA list with configurable weight exponent (`--weight_p`, default: 1).
+4. **Visualization**: Three-panel figure (patchwork):
+   - Running enrichment score curve with ES peak indicator
+   - Hit barcode plot (positions of set members in ranked list)
+   - Ranked metric (Cox z-statistic) distribution
+5. **Export formats**: PDF (cairo_pdf, 300 dpi), SVG (svglite), PNG (600 dpi).
+
+**Key parameters**:
+- `--category_regex`: Pathway category filter (default: `GO Biological process`)
+- `--enrichment`: Direction filter (`enriched` or `depleted`, default: `depleted`)
+- `--p_adj_cutoff`: Significance threshold for term selection (default: 0.05)
+- `--preset`: Figure dimension preset (`single_col` default, `double_col`, `presentation`, `poster`)
+
+**Outputs**: `GSEA_enrichmentplot_<term_name>_<timestamp>.{pdf,svg,png}` in `results/figures/SurvivalRank_GSEA/<run_tag>/`.
+
 ### GO Term Redundancy Reduction (Script 16)
 
 **Script**: `16_survGSEA_reduce_redundancy.R`
@@ -439,6 +462,15 @@ Rscript scripts/14_survGSEA_plots.R \
   --n_mirpathdb 12 \
   --preset double_col
 
+# Running-sum enrichment plot
+Rscript scripts/15_survGSEA_enrichment_plot.R \
+  --in_root results/tables/SurvivalRank_GSEA \
+  --out_root results/figures/SurvivalRank_GSEA \
+  --run_tag SurvivalRank_CoxZ_miRPathDB \
+  --category_regex "GO Biological process" \
+  --enrichment depleted \
+  --preset single_col
+
 # GO term redundancy reduction
 Rscript scripts/16_survGSEA_reduce_redundancy.R \
   --sim_threshold 0.9 \
@@ -466,6 +498,8 @@ Rscript scripts/16_survGSEA_reduce_redundancy.R \
 | `km_cut` | Kaplan-Meier group stratification | median |
 | `min_group_n` | Minimum samples per KM group | 5 |
 | `scale_expr` | Standardize expression in Cox models | TRUE |
+| `weight_p` | GSEA running-sum weight exponent | 1 |
+| `category_regex` | Pathway category filter for enrichment plot | `GO Biological process` |
 | `sim_threshold` | rrvgo semantic similarity threshold | 0.9 |
 | `sim_method` | rrvgo similarity measure | Rel |
 | `preset` | Figure dimension preset | `double_col` |
@@ -489,6 +523,7 @@ Rscript scripts/16_survGSEA_reduce_redundancy.R \
 | `12_miEAA_GSEA_categories_pvals.R` | Category distributions | PDF/SVG/PNG figures |
 | `13_survGSEA.R` | GSEA (survival-ranked) | Cox tables, GSEA results |
 | `14_survGSEA_plots.R` | Survival GSEA visualization | PDF/SVG/PNG figures |
+| `15_survGSEA_enrichment_plot.R` | Running-sum enrichment plot | PDF/SVG/PNG figures |
 | `16_survGSEA_reduce_redundancy.R` | GO term redundancy reduction (rrvgo) | Reduced tables, bubble plots |
 
 ---

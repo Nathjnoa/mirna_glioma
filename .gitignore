@@ -10,9 +10,12 @@ logs/
 !results/figures/
 !results/figures/**/*.png
 
-# Exclude PDF/SVG from survGSEA (large vectors, PNG sufficient for repo)
+# SurvivalRank_GSEA: only track reduced_rrvgo PNGs (final post-redundancy figures)
 results/figures/SurvivalRank_GSEA/**/*.pdf
 results/figures/SurvivalRank_GSEA/**/*.svg
+results/figures/SurvivalRank_GSEA/SurvivalRank_CoxZ_miRPathDB/*.png
+!results/figures/SurvivalRank_GSEA/SurvivalRank_CoxZ_miRPathDB/reduced_rrvgo/**/*.png
+!results/figures/SurvivalRank_GSEA/z_stat_distribution.png
 
 # Exclude KM figures (exploratory, not final)
 results/figures/KM_DE_candidates/

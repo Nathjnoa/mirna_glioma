@@ -9,9 +9,9 @@ This project implements a comprehensive analysis pipeline for small RNA sequenci
 1. **Quality Control** (Scripts 01-02): Count matrix inspection, TMM normalization, MDS visualization
 2. **Differential Expression** (Script 03): edgeR quasi-likelihood framework with multiple comparison modes
 3. **Visualization** (Scripts 04-05): Heatmaps and feature-level QC plots
-4. **Survival Analysis** (Scripts 06-08): Spearman correlation, Cox regression, Kaplan-Meier curves
+4. **Survival Analysis** (Script 08): Kaplan-Meier curves for DE candidates
 5. **Functional Enrichment - DE-based** (Scripts 09-12): miEAA GSEA with bubble plots and QC visualizations
-6. **Functional Enrichment - Survival-based** (Scripts 13-14): Survival-ranked GSEA with publication-ready figures
+6. **Functional Enrichment - Survival-based** (Scripts 13-16): Survival-ranked GSEA, enrichment plots, GO redundancy reduction (rrvgo)
 
 ## Repository Structure
 
@@ -21,7 +21,7 @@ mirna_glioma/
 ├── docs/             # Methods documentation
 │   └── METHODS_scripts.md   # Detailed computational methods
 ├── env/              # Conda environment definition
-├── scripts/          # R analysis pipeline (01-14)
+├── scripts/          # R analysis pipeline (01-05, 08-16)
 ├── data/             # Input data (local, gitignored)
 ├── results/          # Output tables and figures (local, gitignored)
 └── logs/             # Timestamped execution logs (local, gitignored)
@@ -55,8 +55,6 @@ Rscript scripts/04_heatmaps_sigRNAs.R --spec config/de_specs.csv
 Rscript scripts/05_deg_qc_plots.R --spec config/de_specs.csv
 
 # Survival analysis
-Rscript scripts/06_survival_exploratory_spearman.R --fdr 0.1
-Rscript scripts/07_survival_cox_univariate.R --fdr 0.1
 Rscript scripts/08_KM_DE_candidates.R --fdr_cut 0.1
 
 # Functional enrichment (DE-based)
@@ -68,17 +66,21 @@ Rscript scripts/12_miEAA_GSEA_categories_pvals.R --run_tag A_conservative
 # Functional enrichment (survival-based)
 Rscript scripts/13_survGSEA.R
 Rscript scripts/14_survGSEA_plots.R
+Rscript scripts/15_survGSEA_enrichment_plot.R --preset single_col
+Rscript scripts/16_survGSEA_reduce_redundancy.R --sim_threshold 0.9
 ```
 
 ## Software Requirements
 
 - **R**: 4.4.3
-- **Key packages**: edgeR (4.4.2), limma (3.62.2), survival (3.8.3), rbioapi (0.8.3), ComplexHeatmap (2.22.0), ggplot2 (4.0.1), patchwork (1.3.2)
+- **Key packages**: edgeR (4.4.2), limma (3.62.2), survival (3.8.3), rbioapi (0.8.3), rrvgo (1.18.0), ComplexHeatmap (2.22.0), ggplot2 (4.0.1), patchwork (1.3.2)
 - **Environment**: `omics-R` (conda)
 
 ## Documentation
 
-- **Computational Methods**: [docs/METHODS_scripts.md](docs/METHODS_scripts.md) - Complete pipeline documentation with parameters, outputs, and example commands
+- **Computational Methods**: [docs/METHODS_scripts.md](docs/METHODS_scripts.md) — Complete pipeline documentation with parameters, outputs, and figure interpretation guide
+- **Runbook**: [docs/RUNBOOK.md](docs/RUNBOOK.md) — Step-by-step reproduction instructions with checklist
+- **Outputs Map**: [docs/OUTPUTS.md](docs/OUTPUTS.md) — Output directory structure and naming conventions
 
 ## Output Highlights
 
