@@ -487,7 +487,7 @@ for (aid in analysis_ids) {
         # Save to per_database/
         db_tag <- safe_name(gsub("\\(miRPathDB\\)", "", db_name))
         out_base_db <- file.path(dir_per_database, paste0(aid_fs, "_", db_tag, "_", dir_tag, "_", run_tag, "_", ts))
-        save_plot(p_db, out_base_db, n_rows = 1, width_mult = 0.7)
+        save_plot(p_db, out_base_db, n_rows = 1, width_mult = 1.0)
         cat(sprintf("    Saved %s %s to per_database/\n", db_name, dir_type))
       }
     }
