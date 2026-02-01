@@ -1,0 +1,99 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='357.17pt' height='340.16pt' viewBox='0 0 357.17 340.16'>
+<g class='svglite'>
+<defs>
+  <style type='text/css'><![CDATA[
+    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {
+      fill: none;
+      stroke: #000000;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10.00;
+    }
+    .svglite text {
+      white-space: pre;
+    }
+    .svglite g.glyphgroup path {
+      fill: inherit;
+      stroke: none;
+    }
+  ]]></style>
+</defs>
+<rect width='100%' height='100%' style='stroke: none; fill: #FFFFFF;'/>
+<defs>
+  <clipPath id='cpMC4wMHwzNTcuMTd8MC4wMHwzNDAuMTY='>
+    <rect x='0.00' y='0.00' width='357.17' height='340.16' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMC4wMHwzNTcuMTd8MC4wMHwzNDAuMTY=)'>
+<rect x='0.000000000000064' y='0.000000000000057' width='357.17' height='340.16' style='stroke-width: 0.82; stroke: none; fill: #FFFFFF;' />
+</g>
+<defs>
+  <clipPath id='cpMTk1LjQ3fDI4NS43OXwzMy41NHwyOTkuMjI='>
+    <rect x='195.47' y='33.54' width='90.32' height='265.68' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMTk1LjQ3fDI4NS43OXwzMy41NHwyOTkuMjI=)'>
+<polyline points='199.82,299.22 199.82,33.54 ' style='stroke-width: 0.64; stroke: #E5E5E5; stroke-linecap: butt;' />
+<polyline points='216.98,299.22 216.98,33.54 ' style='stroke-width: 0.64; stroke: #E5E5E5; stroke-linecap: butt;' />
+<polyline points='234.14,299.22 234.14,33.54 ' style='stroke-width: 0.64; stroke: #E5E5E5; stroke-linecap: butt;' />
+<polyline points='251.29,299.22 251.29,33.54 ' style='stroke-width: 0.64; stroke: #E5E5E5; stroke-linecap: butt;' />
+<polyline points='268.45,299.22 268.45,33.54 ' style='stroke-width: 0.64; stroke: #E5E5E5; stroke-linecap: butt;' />
+<polyline points='285.61,299.22 285.61,33.54 ' style='stroke-width: 0.64; stroke: #E5E5E5; stroke-linecap: butt;' />
+<circle cx='281.69' cy='46.61' r='5.16' style='stroke-width: 0.55; stroke: #009E73; stroke-opacity: 0.85; fill: #009E73; fill-opacity: 0.85;' />
+<circle cx='270.02' cy='68.39' r='4.48' style='stroke-width: 0.55; stroke: #009E73; stroke-opacity: 0.85; fill: #009E73; fill-opacity: 0.85;' />
+<circle cx='262.65' cy='90.16' r='4.18' style='stroke-width: 0.55; stroke: #009E73; stroke-opacity: 0.85; fill: #009E73; fill-opacity: 0.85;' />
+<circle cx='256.05' cy='111.94' r='5.65' style='stroke-width: 0.55; stroke: #009E73; stroke-opacity: 0.85; fill: #009E73; fill-opacity: 0.85;' />
+<circle cx='241.96' cy='133.72' r='3.24' style='stroke-width: 0.55; stroke: #009E73; stroke-opacity: 0.85; fill: #009E73; fill-opacity: 0.85;' />
+<circle cx='241.96' cy='155.50' r='5.16' style='stroke-width: 0.55; stroke: #009E73; stroke-opacity: 0.85; fill: #009E73; fill-opacity: 0.85;' />
+<circle cx='219.56' cy='177.27' r='3.24' style='stroke-width: 0.55; stroke: #009E73; stroke-opacity: 0.85; fill: #009E73; fill-opacity: 0.85;' />
+<circle cx='211.32' cy='199.05' r='3.56' style='stroke-width: 0.55; stroke: #009E73; stroke-opacity: 0.85; fill: #009E73; fill-opacity: 0.85;' />
+<circle cx='209.56' cy='220.83' r='4.66' style='stroke-width: 0.55; stroke: #009E73; stroke-opacity: 0.85; fill: #009E73; fill-opacity: 0.85;' />
+<circle cx='209.56' cy='242.60' r='2.82' style='stroke-width: 0.55; stroke: #009E73; stroke-opacity: 0.85; fill: #009E73; fill-opacity: 0.85;' />
+<circle cx='201.08' cy='264.38' r='1.81' style='stroke-width: 0.55; stroke: #009E73; stroke-opacity: 0.85; fill: #009E73; fill-opacity: 0.85;' />
+<circle cx='199.58' cy='286.16' r='2.52' style='stroke-width: 0.55; stroke: #009E73; stroke-opacity: 0.85; fill: #009E73; fill-opacity: 0.85;' />
+</g>
+<g clip-path='url(#cpMC4wMHwzNTcuMTd8MC4wMHwzNDAuMTY=)'>
+<text x='191.66' y='289.26' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='145.39px' lengthAdjust='spacingAndGlyphs'>AKT-mediated inactivation of FOXO1A</text>
+<text x='191.66' y='262.89' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='134.98px' lengthAdjust='spacingAndGlyphs'>FOXO-mediated transcription of cell</text>
+<text x='191.66' y='272.07' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='46.72px' lengthAdjust='spacingAndGlyphs'>death genes</text>
+<text x='191.66' y='245.70' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='101.52px' lengthAdjust='spacingAndGlyphs'>Signaling by NTRK2 TRKB</text>
+<text x='191.66' y='219.34' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='133.58px' lengthAdjust='spacingAndGlyphs'>Regulation of TP53 Expression and</text>
+<text x='191.66' y='228.52' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='46.25px' lengthAdjust='spacingAndGlyphs'>Degradation</text>
+<text x='191.66' y='202.15' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='98.17px' lengthAdjust='spacingAndGlyphs'>Other interleukin signaling</text>
+<text x='191.66' y='175.78' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='149.17px' lengthAdjust='spacingAndGlyphs'>RUNX2 regulates genes involved in cell</text>
+<text x='191.66' y='184.96' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='34.92px' lengthAdjust='spacingAndGlyphs'>migration</text>
+<text x='191.66' y='154.01' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='134.50px' lengthAdjust='spacingAndGlyphs'>Estrogen-dependent nuclear events</text>
+<text x='191.66' y='163.19' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='154.81px' lengthAdjust='spacingAndGlyphs'>downstream of ESR-membrane signaling</text>
+<text x='191.66' y='132.23' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='127.91px' lengthAdjust='spacingAndGlyphs'>AKT phosphorylates targets in the</text>
+<text x='191.66' y='141.41' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='29.27px' lengthAdjust='spacingAndGlyphs'>nucleus</text>
+<text x='191.66' y='115.04' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='150.58px' lengthAdjust='spacingAndGlyphs'>Signaling by Receptor Tyrosine Kinases</text>
+<text x='191.66' y='88.67' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='127.91px' lengthAdjust='spacingAndGlyphs'>AKT phosphorylates targets in the</text>
+<text x='191.66' y='97.85' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='26.44px' lengthAdjust='spacingAndGlyphs'>cytosol</text>
+<text x='191.66' y='66.90' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='142.56px' lengthAdjust='spacingAndGlyphs'>Activation of BAD and translocation to</text>
+<text x='191.66' y='76.08' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='48.61px' lengthAdjust='spacingAndGlyphs'>mitochondria</text>
+<text x='191.66' y='49.71' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='116.12px' lengthAdjust='spacingAndGlyphs'>Activation of BH3-only proteins</text>
+<text x='199.82' y='308.50' text-anchor='middle' style='font-size: 7.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='14.59px' lengthAdjust='spacingAndGlyphs'>1.25</text>
+<text x='216.98' y='308.50' text-anchor='middle' style='font-size: 7.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='14.59px' lengthAdjust='spacingAndGlyphs'>1.50</text>
+<text x='234.14' y='308.50' text-anchor='middle' style='font-size: 7.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='14.59px' lengthAdjust='spacingAndGlyphs'>1.75</text>
+<text x='251.29' y='308.50' text-anchor='middle' style='font-size: 7.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='14.59px' lengthAdjust='spacingAndGlyphs'>2.00</text>
+<text x='268.45' y='308.50' text-anchor='middle' style='font-size: 7.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='14.59px' lengthAdjust='spacingAndGlyphs'>2.25</text>
+<text x='285.61' y='308.50' text-anchor='middle' style='font-size: 7.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='14.59px' lengthAdjust='spacingAndGlyphs'>2.50</text>
+<text x='240.63' y='318.46' text-anchor='middle' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='69.84px' lengthAdjust='spacingAndGlyphs'>-log10(P-adjusted)</text>
+<text x='298.49' y='129.99' style='font-size: 7.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='34.59px' lengthAdjust='spacingAndGlyphs'>Observed</text>
+<circle cx='305.64' cy='140.72' r='3.24' style='stroke-width: 0.55; stroke: #009E73; stroke-opacity: 0.85; fill: #009E73; fill-opacity: 0.85;' />
+<circle cx='305.64' cy='152.06' r='3.95' style='stroke-width: 0.55; stroke: #009E73; stroke-opacity: 0.85; fill: #009E73; fill-opacity: 0.85;' />
+<circle cx='305.64' cy='163.40' r='4.48' style='stroke-width: 0.55; stroke: #009E73; stroke-opacity: 0.85; fill: #009E73; fill-opacity: 0.85;' />
+<circle cx='305.64' cy='175.24' r='4.92' style='stroke-width: 0.55; stroke: #009E73; stroke-opacity: 0.85; fill: #009E73; fill-opacity: 0.85;' />
+<circle cx='305.64' cy='188.09' r='5.30' style='stroke-width: 0.55; stroke: #009E73; stroke-opacity: 0.85; fill: #009E73; fill-opacity: 0.85;' />
+<circle cx='305.64' cy='201.92' r='5.65' style='stroke-width: 0.55; stroke: #009E73; stroke-opacity: 0.85; fill: #009E73; fill-opacity: 0.85;' />
+<text x='317.02' y='143.45' style='font-size: 7.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='8.34px' lengthAdjust='spacingAndGlyphs'>10</text>
+<text x='317.02' y='154.79' style='font-size: 7.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='8.34px' lengthAdjust='spacingAndGlyphs'>15</text>
+<text x='317.02' y='166.13' style='font-size: 7.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='8.34px' lengthAdjust='spacingAndGlyphs'>20</text>
+<text x='317.02' y='177.97' style='font-size: 7.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='8.34px' lengthAdjust='spacingAndGlyphs'>25</text>
+<text x='317.02' y='190.82' style='font-size: 7.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='8.34px' lengthAdjust='spacingAndGlyphs'>30</text>
+<text x='317.02' y='204.65' style='font-size: 7.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='8.34px' lengthAdjust='spacingAndGlyphs'>35</text>
+<text x='195.47' y='27.13' style='font-size: 10.00px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='275.09px' lengthAdjust='spacingAndGlyphs'>Reactome (miRPathDB) (Enriched): EDAD_gt70_vs_40_60</text>
+</g>
+</g>
+</svg>

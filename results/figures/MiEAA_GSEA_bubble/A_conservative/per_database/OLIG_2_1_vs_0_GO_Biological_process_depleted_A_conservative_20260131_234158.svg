@@ -1,0 +1,88 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='357.17pt' height='340.16pt' viewBox='0 0 357.17 340.16'>
+<g class='svglite'>
+<defs>
+  <style type='text/css'><![CDATA[
+    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {
+      fill: none;
+      stroke: #000000;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10.00;
+    }
+    .svglite text {
+      white-space: pre;
+    }
+    .svglite g.glyphgroup path {
+      fill: inherit;
+      stroke: none;
+    }
+  ]]></style>
+</defs>
+<rect width='100%' height='100%' style='stroke: none; fill: #FFFFFF;'/>
+<defs>
+  <clipPath id='cpMC4wMHwzNTcuMTd8MC4wMHwzNDAuMTY='>
+    <rect x='0.00' y='0.00' width='357.17' height='340.16' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMC4wMHwzNTcuMTd8MC4wMHwzNDAuMTY=)'>
+<rect x='0.000000000000032' y='0.000000000000057' width='357.17' height='340.16' style='stroke-width: 0.82; stroke: none; fill: #FFFFFF;' />
+</g>
+<defs>
+  <clipPath id='cpMjAxLjEzfDI4NS43OXwzMy41NHwyOTkuMjI='>
+    <rect x='201.13' y='33.54' width='84.66' height='265.68' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMjAxLjEzfDI4NS43OXwzMy41NHwyOTkuMjI=)'>
+<polyline points='201.35,299.22 201.35,33.54 ' style='stroke-width: 0.64; stroke: #E5E5E5; stroke-linecap: butt;' />
+<polyline points='231.13,299.22 231.13,33.54 ' style='stroke-width: 0.64; stroke: #E5E5E5; stroke-linecap: butt;' />
+<polyline points='260.91,299.22 260.91,33.54 ' style='stroke-width: 0.64; stroke: #E5E5E5; stroke-linecap: butt;' />
+<circle cx='281.94' cy='46.61' r='2.22' style='stroke-width: 0.55; stroke: #D55E00; stroke-opacity: 0.85; fill: #D55E00; fill-opacity: 0.85;' />
+<circle cx='204.98' cy='68.39' r='3.70' style='stroke-width: 0.55; stroke: #D55E00; stroke-opacity: 0.85; fill: #D55E00; fill-opacity: 0.85;' />
+<circle cx='204.98' cy='90.16' r='1.81' style='stroke-width: 0.55; stroke: #D55E00; stroke-opacity: 0.85; fill: #D55E00; fill-opacity: 0.85;' />
+<circle cx='204.98' cy='111.94' r='5.65' style='stroke-width: 0.55; stroke: #D55E00; stroke-opacity: 0.85; fill: #D55E00; fill-opacity: 0.85;' />
+<circle cx='204.98' cy='133.72' r='2.22' style='stroke-width: 0.55; stroke: #D55E00; stroke-opacity: 0.85; fill: #D55E00; fill-opacity: 0.85;' />
+<circle cx='204.98' cy='155.50' r='4.32' style='stroke-width: 0.55; stroke: #D55E00; stroke-opacity: 0.85; fill: #D55E00; fill-opacity: 0.85;' />
+<circle cx='204.98' cy='177.27' r='3.61' style='stroke-width: 0.55; stroke: #D55E00; stroke-opacity: 0.85; fill: #D55E00; fill-opacity: 0.85;' />
+<circle cx='204.98' cy='199.05' r='2.82' style='stroke-width: 0.55; stroke: #D55E00; stroke-opacity: 0.85; fill: #D55E00; fill-opacity: 0.85;' />
+<circle cx='204.98' cy='220.83' r='2.73' style='stroke-width: 0.55; stroke: #D55E00; stroke-opacity: 0.85; fill: #D55E00; fill-opacity: 0.85;' />
+<circle cx='204.98' cy='242.60' r='2.90' style='stroke-width: 0.55; stroke: #D55E00; stroke-opacity: 0.85; fill: #D55E00; fill-opacity: 0.85;' />
+<circle cx='204.98' cy='264.38' r='3.35' style='stroke-width: 0.55; stroke: #D55E00; stroke-opacity: 0.85; fill: #D55E00; fill-opacity: 0.85;' />
+<circle cx='204.98' cy='286.16' r='1.81' style='stroke-width: 0.55; stroke: #D55E00; stroke-opacity: 0.85; fill: #D55E00; fill-opacity: 0.85;' />
+</g>
+<g clip-path='url(#cpMC4wMHwzNTcuMTd8MC4wMHwzNDAuMTY=)'>
+<text x='197.32' y='284.67' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='134.05px' lengthAdjust='spacingAndGlyphs'>protein localization to bicellular tight</text>
+<text x='197.32' y='293.85' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='29.27px' lengthAdjust='spacingAndGlyphs'>junction</text>
+<text x='197.32' y='253.71' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='126.48px' lengthAdjust='spacingAndGlyphs'>positive regulation of transcription</text>
+<text x='197.32' y='262.89' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='160.47px' lengthAdjust='spacingAndGlyphs'>from RNA polymerase II promoter involved</text>
+<text x='197.32' y='272.07' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='118.47px' lengthAdjust='spacingAndGlyphs'>in cellular response to chemical</text>
+<text x='197.32' y='281.25' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='31.16px' lengthAdjust='spacingAndGlyphs'>stimulus</text>
+<text x='197.32' y='241.11' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='133.58px' lengthAdjust='spacingAndGlyphs'>positive regulation of canonical Wnt</text>
+<text x='197.32' y='250.29' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='67.50px' lengthAdjust='spacingAndGlyphs'>signaling pathway</text>
+<text x='197.32' y='219.34' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='117.98px' lengthAdjust='spacingAndGlyphs'>negative regulation of G0 to G1</text>
+<text x='197.32' y='228.52' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='34.45px' lengthAdjust='spacingAndGlyphs'>transition</text>
+<text x='197.32' y='202.15' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='88.27px' lengthAdjust='spacingAndGlyphs'>muscle system process</text>
+<text x='197.32' y='180.37' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='119.91px' lengthAdjust='spacingAndGlyphs'>mitotic DNA integrity checkpoint</text>
+<text x='197.32' y='158.60' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='101.95px' lengthAdjust='spacingAndGlyphs'>macromolecule localization</text>
+<text x='197.32' y='136.82' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='68.44px' lengthAdjust='spacingAndGlyphs'>cytosolic transport</text>
+<text x='197.32' y='115.04' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='97.70px' lengthAdjust='spacingAndGlyphs'>cellular metabolic process</text>
+<text x='197.32' y='88.67' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='150.08px' lengthAdjust='spacingAndGlyphs'>cardiac muscle hypertrophy in response</text>
+<text x='197.32' y='97.85' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='32.09px' lengthAdjust='spacingAndGlyphs'>to stress</text>
+<text x='197.32' y='71.49' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='93.94px' lengthAdjust='spacingAndGlyphs'>DNA damage checkpoint</text>
+<text x='197.32' y='45.12' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='138.75px' lengthAdjust='spacingAndGlyphs'>cellular response to reactive nitrogen</text>
+<text x='197.32' y='54.30' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='28.80px' lengthAdjust='spacingAndGlyphs'>species</text>
+<text x='201.35' y='308.50' text-anchor='middle' style='font-size: 7.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='10.42px' lengthAdjust='spacingAndGlyphs'>0.4</text>
+<text x='231.13' y='308.50' text-anchor='middle' style='font-size: 7.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='10.42px' lengthAdjust='spacingAndGlyphs'>0.5</text>
+<text x='260.91' y='308.50' text-anchor='middle' style='font-size: 7.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='10.42px' lengthAdjust='spacingAndGlyphs'>0.6</text>
+<text x='243.46' y='318.46' text-anchor='middle' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='69.84px' lengthAdjust='spacingAndGlyphs'>-log10(P-adjusted)</text>
+<text x='298.49' y='149.00' style='font-size: 7.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='34.59px' lengthAdjust='spacingAndGlyphs'>Observed</text>
+<circle cx='305.11' cy='159.73' r='3.65' style='stroke-width: 0.55; stroke: #D55E00; stroke-opacity: 0.85; fill: #D55E00; fill-opacity: 0.85;' />
+<circle cx='305.11' cy='171.11' r='4.57' style='stroke-width: 0.55; stroke: #D55E00; stroke-opacity: 0.85; fill: #D55E00; fill-opacity: 0.85;' />
+<circle cx='305.11' cy='183.43' r='5.26' style='stroke-width: 0.55; stroke: #D55E00; stroke-opacity: 0.85; fill: #D55E00; fill-opacity: 0.85;' />
+<text x='315.96' y='162.46' style='font-size: 7.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='8.34px' lengthAdjust='spacingAndGlyphs'>25</text>
+<text x='315.96' y='173.84' style='font-size: 7.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='8.34px' lengthAdjust='spacingAndGlyphs'>50</text>
+<text x='315.96' y='186.17' style='font-size: 7.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='8.34px' lengthAdjust='spacingAndGlyphs'>75</text>
+<text x='201.13' y='27.13' style='font-size: 10.00px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='304.02px' lengthAdjust='spacingAndGlyphs'>GO Biological process (miRPathDB) (Depleted): OLIG_2_1_vs_0</text>
+</g>
+</g>
+</svg>

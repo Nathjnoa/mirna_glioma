@@ -290,7 +290,6 @@ cat("============================================\n\n")
 
 mirpath_levels <- c(
   "GO Biological process (miRPathDB)",
-  "GO Molecular function (miRPathDB)",
   "KEGG (miRPathDB)",
   "Reactome (miRPathDB)"
 )
@@ -405,6 +404,12 @@ for (aid in analysis_ids) {
       save_plot(p_mirpath, out_base, n_rows = 2, width_mult = 1.25)
     }
   } else {
+    # ---- CREATE OUTPUT SUBDIRECTORIES ----
+    dir_enriched_depleted <- file.path(out_root, run_tag, "enriched_depleted")
+    dir_per_database <- file.path(out_root, run_tag, "per_database")
+    dir.create(dir_enriched_depleted, showWarnings = FALSE, recursive = TRUE)
+    dir.create(dir_per_database, showWarnings = FALSE, recursive = TRUE)
+
     # ---- SEPARATE PLOTS: Enriched and Depleted ----
     # Store plots for combined figure
     plots_list <- list()
@@ -434,10 +439,10 @@ for (aid in analysis_ids) {
       # Color: single color per direction (no legend needed)
       dir_color <- colors_direction[[dir_type]]
 
-      # Create plot
+      # Create plot with 3-panel layout (ncol=3 for GO BP, KEGG, Reactome)
       p_dir <- ggplot(df_dir, aes(x = logp, y = term_plot)) +
         geom_point(aes(size = observed), alpha = 0.85, color = dir_color) +
-        facet_wrap(~db, ncol = 2, drop = FALSE, scales = "free_y",
+        facet_wrap(~db, ncol = 3, drop = FALSE, scales = "free_y",
                    labeller = labeller(db = label_wrap_gen(width = 16))) +
         scale_y_discrete(labels = function(x) str_wrap(gsub("\\|\\|\\|.*$", "", x), width = wrap_width)) +
         scale_size(range = size_range, name = "Observed") +
@@ -448,14 +453,43 @@ for (aid in analysis_ids) {
         ) +
         theme_pub()
 
-      # Save individual plot
+      # Save individual plot to enriched_depleted/
       dir_tag <- tolower(dir_type)
-      out_base <- file.path(out_root, run_tag, paste0("Bubble_miRPathDB_", dir_tag, "_", aid_fs, "_", run_tag))
-      save_plot(p_dir, out_base, n_rows = 2, width_mult = 1.25)
-      cat(sprintf("  Saved %s plot\n", dir_type))
+      out_base <- file.path(dir_enriched_depleted, paste0("Bubble_miRPathDB_", dir_tag, "_", aid_fs, "_", run_tag, "_", ts))
+      save_plot(p_dir, out_base, n_rows = 1, width_mult = 1.5)
+      cat(sprintf("  Saved %s plot to enriched_depleted/\n", dir_type))
 
       # Store plot for combined figure
       plots_list[[dir_type]] <- p_dir
+
+      # ---- PER-DATABASE PLOTS ----
+      for (db_name in mirpath_levels) {
+        df_db <- df_dir %>% filter(db == db_name)
+        if (nrow(df_db) == 0) next
+
+        # Order terms for single-DB plot
+        df_db <- df_db %>% arrange(desc(logp))
+        df_db$term_plot <- factor(df_db$term, levels = df_db$term)
+        df_db$term_plot <- factor(df_db$term_plot, levels = rev(levels(df_db$term_plot)))
+
+        # Single-panel plot for this database
+        p_db <- ggplot(df_db, aes(x = logp, y = term_plot)) +
+          geom_point(aes(size = observed), alpha = 0.85, color = dir_color) +
+          scale_y_discrete(labels = function(x) str_wrap(x, width = wrap_width)) +
+          scale_size(range = size_range, name = "Observed") +
+          labs(
+            x = paste0("-log10(", p_sel$source, ")"),
+            y = NULL,
+            title = paste0(db_name, " (", dir_type, "): ", aid)
+          ) +
+          theme_pub()
+
+        # Save to per_database/
+        db_tag <- safe_name(gsub("\\(miRPathDB\\)", "", db_name))
+        out_base_db <- file.path(dir_per_database, paste0(aid_fs, "_", db_tag, "_", dir_tag, "_", run_tag, "_", ts))
+        save_plot(p_db, out_base_db, n_rows = 1, width_mult = 0.7)
+        cat(sprintf("    Saved %s %s to per_database/\n", db_name, dir_type))
+      }
     }
 
     # ---- COMBINED PLOT: Enriched + Depleted side-by-side ----
@@ -472,10 +506,10 @@ for (aid in analysis_ids) {
           )
         )
 
-      # Save combined plot (wider, 2x width for side-by-side)
-      out_base_combined <- file.path(out_root, run_tag, paste0("Bubble_miRPathDB_combined_", aid_fs, "_", run_tag))
-      save_plot(p_combined, out_base_combined, n_rows = 2, width_mult = 2.5)
-      cat("  Saved combined plot\n")
+      # Save combined plot to enriched_depleted/ (wider, 2x width for side-by-side)
+      out_base_combined <- file.path(dir_enriched_depleted, paste0("Bubble_miRPathDB_combined_", aid_fs, "_", run_tag, "_", ts))
+      save_plot(p_combined, out_base_combined, n_rows = 1, width_mult = 3)
+      cat("  Saved combined plot to enriched_depleted/\n")
     } else {
       cat("  SKIP combined plot: need both Enriched and Depleted\n")
     }

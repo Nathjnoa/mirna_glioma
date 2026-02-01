@@ -1,0 +1,95 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='357.17pt' height='340.16pt' viewBox='0 0 357.17 340.16'>
+<g class='svglite'>
+<defs>
+  <style type='text/css'><![CDATA[
+    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {
+      fill: none;
+      stroke: #000000;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10.00;
+    }
+    .svglite text {
+      white-space: pre;
+    }
+    .svglite g.glyphgroup path {
+      fill: inherit;
+      stroke: none;
+    }
+  ]]></style>
+</defs>
+<rect width='100%' height='100%' style='stroke: none; fill: #FFFFFF;'/>
+<defs>
+  <clipPath id='cpMC4wMHwzNTcuMTd8MC4wMHwzNDAuMTY='>
+    <rect x='0.00' y='0.00' width='357.17' height='340.16' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMC4wMHwzNTcuMTd8MC4wMHwzNDAuMTY=)'>
+<rect x='0.000000000000064' y='0.000000000000057' width='357.17' height='340.16' style='stroke-width: 0.82; stroke: none; fill: #FFFFFF;' />
+</g>
+<defs>
+  <clipPath id='cpMjA4Ljc3fDI4NS43OXwzMy41NHwyOTkuMjI='>
+    <rect x='208.77' y='33.54' width='77.02' height='265.68' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMjA4Ljc3fDI4NS43OXwzMy41NHwyOTkuMjI=)'>
+<polyline points='214.34,299.22 214.34,33.54 ' style='stroke-width: 0.64; stroke: #E5E5E5; stroke-linecap: butt;' />
+<polyline points='238.18,299.22 238.18,33.54 ' style='stroke-width: 0.64; stroke: #E5E5E5; stroke-linecap: butt;' />
+<polyline points='262.02,299.22 262.02,33.54 ' style='stroke-width: 0.64; stroke: #E5E5E5; stroke-linecap: butt;' />
+<circle cx='282.29' cy='46.61' r='3.38' style='stroke-width: 0.55; stroke: #D55E00; stroke-opacity: 0.85; fill: #D55E00; fill-opacity: 0.85;' />
+<circle cx='282.29' cy='68.39' r='1.81' style='stroke-width: 0.55; stroke: #D55E00; stroke-opacity: 0.85; fill: #D55E00; fill-opacity: 0.85;' />
+<circle cx='282.29' cy='90.16' r='4.03' style='stroke-width: 0.55; stroke: #D55E00; stroke-opacity: 0.85; fill: #D55E00; fill-opacity: 0.85;' />
+<circle cx='282.29' cy='111.94' r='5.65' style='stroke-width: 0.55; stroke: #D55E00; stroke-opacity: 0.85; fill: #D55E00; fill-opacity: 0.85;' />
+<circle cx='256.46' cy='133.72' r='4.03' style='stroke-width: 0.55; stroke: #D55E00; stroke-opacity: 0.85; fill: #D55E00; fill-opacity: 0.85;' />
+<circle cx='253.28' cy='155.50' r='1.81' style='stroke-width: 0.55; stroke: #D55E00; stroke-opacity: 0.85; fill: #D55E00; fill-opacity: 0.85;' />
+<circle cx='212.27' cy='177.27' r='3.38' style='stroke-width: 0.55; stroke: #D55E00; stroke-opacity: 0.85; fill: #D55E00; fill-opacity: 0.85;' />
+<circle cx='212.27' cy='199.05' r='4.95' style='stroke-width: 0.55; stroke: #D55E00; stroke-opacity: 0.85; fill: #D55E00; fill-opacity: 0.85;' />
+<circle cx='212.27' cy='220.83' r='3.38' style='stroke-width: 0.55; stroke: #D55E00; stroke-opacity: 0.85; fill: #D55E00; fill-opacity: 0.85;' />
+<circle cx='212.27' cy='242.60' r='3.38' style='stroke-width: 0.55; stroke: #D55E00; stroke-opacity: 0.85; fill: #D55E00; fill-opacity: 0.85;' />
+<circle cx='212.27' cy='264.38' r='3.38' style='stroke-width: 0.55; stroke: #D55E00; stroke-opacity: 0.85; fill: #D55E00; fill-opacity: 0.85;' />
+<circle cx='212.27' cy='286.16' r='5.32' style='stroke-width: 0.55; stroke: #D55E00; stroke-opacity: 0.85; fill: #D55E00; fill-opacity: 0.85;' />
+</g>
+<g clip-path='url(#cpMC4wMHwzNTcuMTd8MC4wMHwzNDAuMTY=)'>
+<text x='204.96' y='289.26' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='108.11px' lengthAdjust='spacingAndGlyphs'>Erythropoietin activates RAS</text>
+<text x='204.96' y='267.48' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='125.61px' lengthAdjust='spacingAndGlyphs'>ERBB2 Activates PTK6 Signaling</text>
+<text x='204.96' y='241.11' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='141.62px' lengthAdjust='spacingAndGlyphs'>CDC6 association with the ORCorigin</text>
+<text x='204.96' y='250.29' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='31.62px' lengthAdjust='spacingAndGlyphs'>complex</text>
+<text x='204.96' y='223.93' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='143.97px' lengthAdjust='spacingAndGlyphs'>Apoptosis induced DNA fragmentation</text>
+<text x='204.96' y='197.56' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='149.64px' lengthAdjust='spacingAndGlyphs'>Activation of PUMA and translocation to</text>
+<text x='204.96' y='206.74' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='48.61px' lengthAdjust='spacingAndGlyphs'>mitochondria</text>
+<text x='204.96' y='180.37' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='144.94px' lengthAdjust='spacingAndGlyphs'>Activated NTRK3 signals through RAS</text>
+<text x='204.96' y='149.42' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='128.83px' lengthAdjust='spacingAndGlyphs'>Transcription of E2F targets under</text>
+<text x='204.96' y='158.60' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='153.86px' lengthAdjust='spacingAndGlyphs'>negative control by p107 RBL1 and p130</text>
+<text x='204.96' y='167.78' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='112.84px' lengthAdjust='spacingAndGlyphs'>RBL2 in complex with HDAC1</text>
+<text x='204.96' y='136.82' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='114.27px' lengthAdjust='spacingAndGlyphs'>ERBB2 Regulates Cell Motility</text>
+<text x='204.96' y='105.86' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='109.52px' lengthAdjust='spacingAndGlyphs'>TFAP2 AP-2 family regulates</text>
+<text x='204.96' y='115.04' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='127.89px' lengthAdjust='spacingAndGlyphs'>transcription of growth factors and</text>
+<text x='204.96' y='124.22' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='54.27px' lengthAdjust='spacingAndGlyphs'>their receptors</text>
+<text x='204.96' y='93.26' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='168.11px' lengthAdjust='spacingAndGlyphs'>KSRP KHSRP binds and destabilizes mRNA</text>
+<text x='204.96' y='71.49' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='87.31px' lengthAdjust='spacingAndGlyphs'>Interleukin-10 signaling</text>
+<text x='204.96' y='45.12' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='134.98px' lengthAdjust='spacingAndGlyphs'>FOXO-mediated transcription of cell</text>
+<text x='204.96' y='54.30' text-anchor='end' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='46.72px' lengthAdjust='spacingAndGlyphs'>death genes</text>
+<text x='214.34' y='308.50' text-anchor='middle' style='font-size: 7.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='14.59px' lengthAdjust='spacingAndGlyphs'>0.36</text>
+<text x='238.18' y='308.50' text-anchor='middle' style='font-size: 7.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='14.59px' lengthAdjust='spacingAndGlyphs'>0.38</text>
+<text x='262.02' y='308.50' text-anchor='middle' style='font-size: 7.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='14.59px' lengthAdjust='spacingAndGlyphs'>0.40</text>
+<text x='247.28' y='318.46' text-anchor='middle' style='font-size: 8.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='69.84px' lengthAdjust='spacingAndGlyphs'>-log10(P-adjusted)</text>
+<text x='298.49' y='124.27' style='font-size: 7.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='34.59px' lengthAdjust='spacingAndGlyphs'>Observed</text>
+<circle cx='305.64' cy='135.00' r='1.81' style='stroke-width: 0.55; stroke: #D55E00; stroke-opacity: 0.85; fill: #D55E00; fill-opacity: 0.85;' />
+<circle cx='305.64' cy='146.34' r='3.38' style='stroke-width: 0.55; stroke: #D55E00; stroke-opacity: 0.85; fill: #D55E00; fill-opacity: 0.85;' />
+<circle cx='305.64' cy='157.67' r='4.03' style='stroke-width: 0.55; stroke: #D55E00; stroke-opacity: 0.85; fill: #D55E00; fill-opacity: 0.85;' />
+<circle cx='305.64' cy='169.01' r='4.53' style='stroke-width: 0.55; stroke: #D55E00; stroke-opacity: 0.85; fill: #D55E00; fill-opacity: 0.85;' />
+<circle cx='305.64' cy='180.89' r='4.95' style='stroke-width: 0.55; stroke: #D55E00; stroke-opacity: 0.85; fill: #D55E00; fill-opacity: 0.85;' />
+<circle cx='305.64' cy='193.80' r='5.32' style='stroke-width: 0.55; stroke: #D55E00; stroke-opacity: 0.85; fill: #D55E00; fill-opacity: 0.85;' />
+<circle cx='305.64' cy='207.64' r='5.65' style='stroke-width: 0.55; stroke: #D55E00; stroke-opacity: 0.85; fill: #D55E00; fill-opacity: 0.85;' />
+<text x='317.02' y='137.73' style='font-size: 7.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='4.17px' lengthAdjust='spacingAndGlyphs'>5</text>
+<text x='317.02' y='149.07' style='font-size: 7.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='4.17px' lengthAdjust='spacingAndGlyphs'>6</text>
+<text x='317.02' y='160.41' style='font-size: 7.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='4.17px' lengthAdjust='spacingAndGlyphs'>7</text>
+<text x='317.02' y='171.75' style='font-size: 7.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='4.17px' lengthAdjust='spacingAndGlyphs'>8</text>
+<text x='317.02' y='183.62' style='font-size: 7.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='4.17px' lengthAdjust='spacingAndGlyphs'>9</text>
+<text x='317.02' y='196.53' style='font-size: 7.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='8.34px' lengthAdjust='spacingAndGlyphs'>10</text>
+<text x='317.02' y='210.37' style='font-size: 7.50px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='8.34px' lengthAdjust='spacingAndGlyphs'>11</text>
+<text x='208.77' y='27.13' style='font-size: 10.00px; font-weight: 0; font-family: "TeXGyreHeros";' textLength='213.67px' lengthAdjust='spacingAndGlyphs'>Reactome (miRPathDB) (Depleted): KI67_&gt;20</text>
+</g>
+</g>
+</svg>
