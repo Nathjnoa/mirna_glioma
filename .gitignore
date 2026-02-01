@@ -1,8 +1,9 @@
 # Data (large/sensitive - not tracked)
 data/
 
-# Results - exclude tables and intermediate, but track publication figures
-results/tables/
+# Results - exclude tables and intermediate, but track publication figures and summary reports
+results/tables/*
+!results/tables/reports/
 results/DE/
 logs/
 
