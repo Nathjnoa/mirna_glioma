@@ -152,6 +152,24 @@ Rscript scripts/16_survGSEA_reduce_redundancy.R \
   --run_tag SurvivalRank_CoxZ_miRPathDB
 ```
 
+### Phase 7: Pathway-miRNA Reports (Optional)
+
+Generate summary reports with miRNAs annotated by rank and statistic value:
+
+```bash
+Rscript scripts/17_generate_pathway_mirna_reports.R \
+  --spec config/de_specs.csv \
+  --de_root results/DE \
+  --gsea_root results/tables/MiEAA_GSEA \
+  --surv_root results/tables/SurvivalRank_GSEA \
+  --run_tag A_conservative \
+  --top_n 12
+```
+
+This generates:
+- `results/tables/reports/GSEA_DE_top12_annotated_*.csv` — DE-based pathways with miRNA ranks and logFC
+- `results/tables/reports/GSEA_survGSEA_top12_annotated_*.csv` — Survival-based pathways with miRNA ranks and z-scores
+
 ---
 
 ## Reproduction Checklist
