@@ -52,6 +52,31 @@ Normalization and quality visualization include:
 
 **Outputs**: Normalized expression matrix (`logCPM_TMM_*.csv`) and library size tables.
 
+### Age-Matched Case-Control Design (Script 02b)
+
+**Script**: `02b_matching_EGFR_VIII.R`
+
+For comparisons with potential confounding by age, a matched case-control design is implemented:
+
+1. **Matching algorithm**: Greedy nearest-neighbor matching with optimization (processes cases by difficulty - fewest available matches first).
+2. **Matching ratio**: 1:2 (one case to two controls) to maximize statistical power while maintaining balance.
+3. **Matching variable**: Age (continuous, years). Maximum allowed difference (caliper): 15 years.
+4. **Balance assessment**:
+   - Standardized Mean Difference (SMD) pre- and post-matching
+   - SMD < 0.25 considered acceptable, < 0.10 excellent
+5. **Sample selection**: Matched samples included in analysis; unmatched samples specified in `de_specs.csv` via `exclude_samples` parameter.
+
+**Example**: For `EGFR_VIII_SI_vs_NO_matched` comparison:
+- 5 cases (MUTACION_EGFR_VIII = SI) matched to 10 controls (= NO)
+- SMD post-matching: 0.263 (acceptable)
+- Mean age difference: 2.0 years
+
+**Outputs**:
+- Matching detail table with case-control pairs and age differences
+- Lists of included/excluded samples for DE specification
+- Diagnostic plots: age distribution by match status, paired age visualization
+- Balance statistics pre- and post-matching
+
 ---
 
 ## C) Differential Expression Analysis

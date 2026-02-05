@@ -18,12 +18,13 @@ results/figures/SurvivalRank_GSEA/SurvivalRank_CoxZ_miRPathDB/*.png
 !results/figures/SurvivalRank_GSEA/SurvivalRank_CoxZ_miRPathDB/reduced_rrvgo/**/*.png
 !results/figures/SurvivalRank_GSEA/z_stat_distribution.png
 
-# MiEAA_GSEA_bubble: only track EDAD_cont_10y and KI67_20 PNGs (main comparisons)
+# MiEAA_GSEA_bubble: only track selected comparison PNGs (main comparisons)
 results/figures/MiEAA_GSEA_bubble/**/*.pdf
 results/figures/MiEAA_GSEA_bubble/**/*.svg
 results/figures/MiEAA_GSEA_bubble/**/*.png
 !results/figures/MiEAA_GSEA_bubble/**/*EDAD_cont_10y*.png
 !results/figures/MiEAA_GSEA_bubble/**/*KI67_20*.png
+!results/figures/MiEAA_GSEA_bubble/**/*EGFR_VIII*.png
 
 # Exclude KM figures (exploratory, not final)
 results/figures/KM_DE_candidates/

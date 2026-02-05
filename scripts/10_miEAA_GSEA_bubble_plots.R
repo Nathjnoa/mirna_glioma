@@ -456,7 +456,7 @@ for (aid in analysis_ids) {
       # Save individual plot to enriched_depleted/
       dir_tag <- tolower(dir_type)
       out_base <- file.path(dir_enriched_depleted, paste0("Bubble_miRPathDB_", dir_tag, "_", aid_fs, "_", run_tag, "_", ts))
-      save_plot(p_dir, out_base, n_rows = 1, width_mult = 1.5)
+      save_plot(p_dir, out_base, n_rows = 1, width_mult = 2.0)
       cat(sprintf("  Saved %s plot to enriched_depleted/\n", dir_type))
 
       # Store plot for combined figure

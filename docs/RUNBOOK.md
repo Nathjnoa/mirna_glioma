@@ -40,6 +40,23 @@ Rscript scripts/01_inspeccion_counts.R data/intermediate/Gliomas_all_counts_merg
 Rscript scripts/02_logcpm_mds.R data/intermediate/Gliomas_all_counts_merged.csv
 ```
 
+### Phase 1b: Age-Matched Group Design (Optional)
+
+For comparisons requiring age-matched case-control groups (e.g., EGFR_VIII):
+
+```bash
+Rscript scripts/02b_matching_EGFR_VIII.R \
+  --meta data/intermediate/Metadatos_gliomas_verificados.csv \
+  --ratio 2 \
+  --caliper 15
+```
+
+This generates:
+- Matching diagnostics in `results/tables/matching/` and `results/figures/matching/`
+- List of excluded samples for `config/de_specs.csv`
+
+Then update `config/de_specs.csv` to add the matched comparison with excluded samples.
+
 ### Phase 2: Differential Expression
 
 ```bash

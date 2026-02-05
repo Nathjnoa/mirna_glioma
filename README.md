@@ -7,7 +7,8 @@ Analysis of miRNA expression in glioma with quality control, differential expres
 This project implements a comprehensive analysis pipeline for small RNA sequencing data from glioma tumor samples:
 
 1. **Quality Control** (Scripts 01-02): Count matrix inspection, TMM normalization, MDS visualization
-2. **Differential Expression** (Script 03): edgeR quasi-likelihood framework with multiple comparison modes
+2. **Matched Group Design** (Script 02b): Age-matched case-control groups (1:2 ratio) for confounding control
+3. **Differential Expression** (Script 03): edgeR quasi-likelihood framework with multiple comparison modes
 3. **Visualization** (Scripts 04-05): Heatmaps and feature-level QC plots
 4. **Survival Analysis** (Script 08): Kaplan-Meier curves for DE candidates
 5. **Functional Enrichment - DE-based** (Scripts 09-12): miEAA GSEA with bubble plots and QC visualizations
@@ -46,6 +47,9 @@ Edit `config/de_specs.csv` to define differential expression comparisons.
 # QC and preprocessing
 Rscript scripts/01_inspeccion_counts.R data/intermediate/Gliomas_all_counts_merged.csv
 Rscript scripts/02_logcpm_mds.R data/intermediate/Gliomas_all_counts_merged.csv
+
+# Age-matched groups (optional, for specific comparisons)
+Rscript scripts/02b_matching_EGFR_VIII.R --meta data/intermediate/Metadatos_gliomas_verificados.csv
 
 # Differential expression
 Rscript scripts/03_edgeR_multiDE.R --spec config/de_specs.csv

@@ -8,3 +8,4 @@ RESECCION_2_vs_01,collapse_levels,RADIOLOGICAL_RESECTION,,,,"2","01","0|1=01;2=2
 P53_TP53_1_vs_0,collapse_levels,P53_(TP53),,,,"1","0","0=0;1=1",drop_unmapped,
 SINAPTOFISINA_1_vs_0,collapse_levels,SINAPTOFISINA,,,,"1","0","0=0;1=1",drop_unmapped,
 OLIG_2_1_vs_0,collapse_levels,OLIG_2,,,,"1","0","0=0;1=1",drop_unmapped,
+EGFR_VIII_SI_vs_NO_matched,as_is,MUTACION_EGFR VIII,,,"",SI,NO,,,T2;T7;T9;T11;T17;T22;T27;T39
