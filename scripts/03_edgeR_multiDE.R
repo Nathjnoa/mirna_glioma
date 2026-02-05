@@ -19,6 +19,17 @@ safe_name <- function(x) {
   x
 }
 
+# Translate Spanish terms to English for figure titles
+translate_to_english <- function(text) {
+  text <- gsub("GENERO", "GENDER", text, fixed = TRUE)
+  text <- gsub("EDAD", "AGE", text, fixed = TRUE)
+  text <- gsub("SEGUIM", "FOLLOWUP", text, fixed = TRUE)
+  text <- gsub("RESECCION", "RESECTION", text, fixed = TRUE)
+  text <- gsub("SINAPTOFISINA", "SYNAPTOPHYSIN", text, fixed = TRUE)
+  text <- gsub("MESES_SEGUIMIENTO_", "FOLLOWUP_MONTHS", text, fixed = TRUE)
+  text
+}
+
 parse_kv_list <- function(s) {
   res <- list()
   if (is.null(s) || nchar(s) == 0) return(res)
@@ -245,7 +256,7 @@ plot_volcano <- function(tt, analysis_fs, tag, fig_dir, ts) {
     labs(
       x = expression(log[2]~Fold~Change),
       y = if (has_fdr) expression(-log[10]~FDR) else expression(-log[10]~P-value),
-      title = paste0(analysis_fs, ": ", tag),
+      title = paste0(translate_to_english(analysis_fs), ": ", tag),
       subtitle = sprintf("Up: %d | Down: %d | Sig (|logFC|<0.584): %d", n_up, n_down, n_sig_low)
     ) +
     theme_classic(base_size = 14) +
