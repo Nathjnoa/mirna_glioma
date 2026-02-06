@@ -7,11 +7,27 @@
 #   hsa-miR-451a (#3, logFC=-0.85); hsa-miR-148a-3p (#6, logFC=-0.72); ...
 #
 # Two report types:
-#   1. DE-based GSEA: uses logFC as ranking statistic
-#   2. Survival-based GSEA: uses Cox z-score as ranking statistic
+#   1. DE-based GSEA: ranks miRNAs as used for miEAA GSEA (from script 09),
+#      and reports logFC for interpretability
+#   2. Survival-based GSEA: ranks miRNAs as used for miEAA GSEA (from script 13),
+#      using Cox z-score
 # -----------------------------------------------------------------------------
 
 options(stringsAsFactors = FALSE)
+
+# Mirror safe_name() used in other pipeline scripts (e.g., 09_miEAA_GSEA_all_comparisons.R)
+safe_name <- function(x) {
+  x <- gsub("[^A-Za-z0-9._-]+", "_", x)
+  x <- gsub("_+", "_", x)
+  x <- gsub("^_|_$", "", x)
+  x
+}
+
+as_num_safe <- function(x) {
+  x <- as.character(x)
+  x <- gsub(",", ".", x)
+  suppressWarnings(as.numeric(x))
+}
 
 # --- CLI parsing ---
 args <- commandArgs(trailingOnly = TRUE)
@@ -78,6 +94,13 @@ find_latest_file <- function(dir_path, pattern) {
   files[which.max(info$mtime)]
 }
 
+# Extract timestamp (YYYYmmdd_HHMMSS) from filenames
+extract_ts <- function(filename) {
+  m <- regmatches(filename, regexpr("[0-9]{8}_[0-9]{6}", filename))
+  if (length(m) == 0 || is.na(m) || !nzchar(m)) return(NA_character_)
+  m
+}
+
 # Format miRNA with rank and statistic
 format_mirna_with_stats <- function(mirnas_str, rank_df, stat_col, stat_name) {
   if (is.na(mirnas_str) || mirnas_str == "") return("")
@@ -123,50 +146,20 @@ de_results_list <- list()
 
 for (i in seq_len(nrow(spec_rows))) {
   analysis_id <- spec_rows$analysis_id[i]
+  analysis_fs <- safe_name(analysis_id)
   cat("\n--- Processing:", analysis_id, "---\n")
 
-  # Find DE results file
+  # Find DE results directory
   de_dir <- file.path(de_root, analysis_id)
+  if (!dir.exists(de_dir)) de_dir <- file.path(de_root, analysis_fs)
   if (!dir.exists(de_dir)) {
-    # Try alternative naming with safe characters
-    de_dir_alt <- file.path(de_root, gsub("[^A-Za-z0-9_-]", "_", analysis_id))
-    if (dir.exists(de_dir_alt)) {
-      de_dir <- de_dir_alt
-    } else {
-      cat("  DE directory not found, skipping\n")
-      next
-    }
-  }
-
-  de_file <- find_latest_file(de_dir, "^DE_.*_all_.*\\.tsv$")
-  if (is.null(de_file)) {
-    cat("  DE file not found, skipping\n")
+    cat("  DE directory not found (tried:", analysis_id, "and", analysis_fs, "), skipping\n")
     next
   }
-  cat("  DE file:", basename(de_file), "\n")
-
-  # Read DE results and compute ranks
-  de_df <- read_table(de_file)
-  if (is.null(de_df) || nrow(de_df) == 0) {
-    cat("  Empty DE results, skipping\n")
-    next
-  }
-
-  # Rank by |logFC| descending (most changed first)
-  de_df$abs_logFC <- abs(de_df$logFC)
-  de_df <- de_df[order(-de_df$abs_logFC), ]
-  de_df$rank <- seq_len(nrow(de_df))
-
-  cat("  Loaded", nrow(de_df), "features, top logFC:",
-      round(de_df$logFC[1], 3), "\n")
 
   # Find GSEA results
-  gsea_dir <- file.path(gsea_root, analysis_id, run_tag)
-  if (!dir.exists(gsea_dir)) {
-    # Try with safe name
-    analysis_safe <- gsub(">", "", gsub("[^A-Za-z0-9_-]", "_", analysis_id))
-    gsea_dir <- file.path(gsea_root, analysis_safe, run_tag)
-  }
+  gsea_dir <- file.path(gsea_root, analysis_fs, run_tag)
+  if (!dir.exists(gsea_dir)) gsea_dir <- file.path(gsea_root, analysis_id, run_tag)
 
   gsea_file <- find_latest_file(gsea_dir, "^MiEAA_GSEA_Qlt.*\\.tsv$")
   if (is.null(gsea_file)) {
@@ -179,6 +172,89 @@ for (i in seq_len(nrow(spec_rows))) {
     next
   }
   cat("  GSEA file:", basename(gsea_file), "\n")
+
+  # Pick DE file: most recent at/just before this GSEA run (fallback: latest overall)
+  de_files <- list.files(de_dir, pattern = "^DE_.*_all_.*\\.tsv$", full.names = TRUE)
+  if (length(de_files) == 0) {
+    cat("  DE file not found, skipping\n")
+    next
+  }
+  de_info <- file.info(de_files)
+  gsea_mtime <- file.info(gsea_file)$mtime
+  idx_before <- which(de_info$mtime <= gsea_mtime)
+  if (length(idx_before) > 0) {
+    de_file <- de_files[idx_before][which.max(de_info$mtime[idx_before])]
+  } else {
+    de_file <- de_files[which.max(de_info$mtime)]
+  }
+  cat("  DE file:", basename(de_file), "\n")
+
+  # Read DE results (for logFC lookup)
+  de_df <- read_table(de_file)
+  if (is.null(de_df) || nrow(de_df) == 0) {
+    cat("  Empty DE results, skipping\n")
+    next
+  }
+  if (!("feature_id" %in% names(de_df))) {
+    cat("  WARNING: DE table missing 'feature_id'; cannot annotate miRNAs, skipping\n")
+    next
+  }
+  if (!("logFC" %in% names(de_df))) {
+    cat("  WARNING: DE table missing 'logFC'; cannot annotate miRNAs, skipping\n")
+    next
+  }
+
+  de_mi <- if ("type" %in% names(de_df)) {
+    de_df[tolower(as.character(de_df$type)) == "mirna", , drop = FALSE]
+  } else {
+    cat("  WARNING: DE table missing 'type' column; using full table for logFC lookup\n")
+    de_df
+  }
+  de_mi$logFC <- as_num_safe(de_mi$logFC)
+  de_mi <- de_mi[is.finite(de_mi$logFC) & nzchar(de_mi$feature_id), , drop = FALSE]
+  if (nrow(de_mi) == 0) {
+    cat("  No valid miRNA logFC values found, skipping\n")
+    next
+  }
+  logfc_map <- setNames(de_mi$logFC, de_mi$feature_id)
+
+  # Determine miRNA rank list used for this GSEA run (prefer the exported ranked list)
+  gsea_ts <- extract_ts(basename(gsea_file))
+  rank_fp <- if (!is.na(gsea_ts)) {
+    file.path(gsea_dir, paste0("MiEAA_ranked_mature_", analysis_fs, "_", gsea_ts, ".txt"))
+  } else {
+    NA_character_
+  }
+
+  ranked_ids <- NULL
+  if (!is.na(rank_fp) && file.exists(rank_fp)) {
+    ranked_ids <- trimws(readLines(rank_fp, warn = FALSE))
+    ranked_ids <- ranked_ids[nzchar(ranked_ids)]
+  } else {
+    # Fallback: compute rank list like script 09 (signed_sqrtF)
+    if (!("F" %in% names(de_mi))) {
+      cat("  WARNING: Missing 'F' column; cannot reconstruct signed_sqrtF ranking. Skipping\n")
+      next
+    }
+    de_mi$F <- as_num_safe(de_mi$F)
+    de_mi <- de_mi[is.finite(de_mi$F), , drop = FALSE]
+    if (nrow(de_mi) < 20) {
+      cat("  Too few miRNAs with valid F/logFC to rank (n<20), skipping\n")
+      next
+    }
+    de_mi$score <- sign(de_mi$logFC) * sqrt(pmax(de_mi$F, 0))
+    de_mi <- de_mi[order(abs(de_mi$score), decreasing = TRUE), , drop = FALSE]
+    de_mi <- de_mi[!duplicated(de_mi$feature_id), , drop = FALSE]
+    ranked_ids <- de_mi$feature_id[order(de_mi$score, decreasing = TRUE)]
+  }
+
+  rank_df <- data.frame(
+    feature_id = ranked_ids,
+    rank = seq_along(ranked_ids),
+    stringsAsFactors = FALSE
+  )
+  rank_df$logFC <- logfc_map[rank_df$feature_id]
+  cat("  miRNAs ranked for GSEA:", nrow(rank_df), "\n")
 
   # Read GSEA results
   gsea_df <- read_table(gsea_file)
@@ -210,7 +286,7 @@ for (i in seq_len(nrow(spec_rows))) {
       if (is.na(mirna_col)) mirna_col <- "miRNAs/precursors"
 
       subset_df$miRNAs_annotated <- sapply(subset_df[[mirna_col]], function(m) {
-        format_mirna_with_stats(m, de_df, "logFC", "logFC")
+        format_mirna_with_stats(m, rank_df, "logFC", "logFC")
       })
 
       # Build output row
@@ -268,94 +344,122 @@ if (!dir.exists(surv_dir)) {
 
     if (!is.null(cox_df) && nrow(cox_df) > 0) {
       # Rank by |z| descending
-      cox_df$abs_z <- abs(cox_df$z)
-      cox_df <- cox_df[order(-cox_df$abs_z), ]
-      cox_df$rank <- seq_len(nrow(cox_df))
+      cox_df$z <- as_num_safe(cox_df$z)
+      cox_df <- cox_df[is.finite(cox_df$z) & nzchar(cox_df$feature_id), , drop = FALSE]
+      if (nrow(cox_df) == 0) {
+        cat("Empty Cox results after filtering non-finite z, skipping\n")
+      } else {
+        # Rank list used for GSEA: signed z, descending (as in script 13)
+        cox_ts <- extract_ts(basename(cox_file))
+        rank_fp <- if (!is.na(cox_ts)) {
+          file.path(surv_dir, paste0("Ranked_miRNAs_by_CoxZ_", cox_ts, ".txt"))
+        } else {
+          NA_character_
+        }
 
-      cat("Loaded", nrow(cox_df), "features from Cox analysis\n")
-      cat("Top z-score:", round(cox_df$z[1], 3), "\n")
+        ranked_ids <- NULL
+        if (!is.na(rank_fp) && file.exists(rank_fp)) {
+          ranked_ids <- trimws(readLines(rank_fp, warn = FALSE))
+          ranked_ids <- ranked_ids[nzchar(ranked_ids)]
+        } else {
+          ranked_tmp <- cox_df[order(cox_df$z, decreasing = TRUE), , drop = FALSE]
+          ranked_tmp <- ranked_tmp[!duplicated(ranked_tmp$feature_id), , drop = FALSE]
+          ranked_ids <- ranked_tmp$feature_id
+        }
 
-      # Find reduced GSEA results (after rrvgo)
-      reduced_dir <- file.path(surv_dir, "reduced_rrvgo")
+        z_map <- setNames(cox_df$z, cox_df$feature_id)
+        cox_rank <- data.frame(
+          feature_id = ranked_ids,
+          rank = seq_along(ranked_ids),
+          z = z_map[ranked_ids],
+          stringsAsFactors = FALSE
+        )
 
-      # Try to find GSEA results
-      gsea_file <- NULL
-      if (dir.exists(reduced_dir)) {
-        gsea_file <- find_latest_file(reduced_dir, "^miEAA_GSEA.*reduced.*\\.tsv$")
-      }
-      if (is.null(gsea_file)) {
-        gsea_file <- find_latest_file(surv_dir, "^miEAA_GSEA.*\\.tsv$")
-      }
+        cat("Loaded", nrow(cox_df), "features from Cox analysis\n")
+        cat("Top z-score:", round(max(cox_rank$z, na.rm = TRUE), 3), "\n")
 
-      if (!is.null(gsea_file)) {
-        cat("GSEA file:", basename(gsea_file), "\n")
+        # Find reduced GSEA results (after rrvgo)
+        reduced_dir <- file.path(surv_dir, "reduced_rrvgo")
 
-        gsea_df <- read_table(gsea_file)
+        # Try to find GSEA results
+        gsea_file <- NULL
+        if (dir.exists(reduced_dir)) {
+          gsea_file <- find_latest_file(reduced_dir, "^miEAA_GSEA.*reduced.*\\.tsv$")
+        }
+        if (is.null(gsea_file)) {
+          gsea_file <- find_latest_file(surv_dir, "^miEAA_GSEA.*\\.tsv$")
+        }
 
-        if (!is.null(gsea_df) && nrow(gsea_df) > 0) {
-          surv_results_list <- list()
+	        if (!is.null(gsea_file)) {
+	          cat("GSEA file:", basename(gsea_file), "\n")
 
-          # Exclude GO Molecular Function
-          gsea_df <- gsea_df[!grepl("Molecular function", gsea_df$Category, ignore.case = TRUE), ]
+          gsea_df <- read_table(gsea_file)
 
-          categories <- unique(gsea_df$Category)
+	          if (!is.null(gsea_df) && nrow(gsea_df) > 0) {
+	            surv_results_list <- list()
 
-          for (cat_name in categories) {
-            for (enrich_dir in c("enriched", "depleted")) {
-              subset_df <- gsea_df[gsea_df$Category == cat_name &
-                                   gsea_df$Enrichment == enrich_dir, ]
+            # Exclude GO Molecular Function
+            gsea_df <- gsea_df[!grepl("Molecular function", gsea_df$Category, ignore.case = TRUE), ]
 
-              if (nrow(subset_df) == 0) next
+            categories <- unique(gsea_df$Category)
 
-              # Sort by Q-value and take top N
-              q_col <- grep("Q-value|q-value|Q_value", names(subset_df),
-                           ignore.case = TRUE, value = TRUE)[1]
-              if (is.na(q_col)) q_col <- "Q-value"
+            for (cat_name in categories) {
+              for (enrich_dir in c("enriched", "depleted")) {
+                subset_df <- gsea_df[gsea_df$Category == cat_name &
+                                     gsea_df$Enrichment == enrich_dir, ]
 
-              subset_df <- subset_df[order(subset_df[[q_col]]), ]
-              subset_df <- head(subset_df, top_n)
+                if (nrow(subset_df) == 0) next
 
-              # Format miRNAs with rank and z-score
-              mirna_col <- grep("miRNA|precursor", names(subset_df),
-                               ignore.case = TRUE, value = TRUE)[1]
-              if (is.na(mirna_col)) mirna_col <- "miRNAs/precursors"
+                # Sort by Q-value and take top N
+                q_col <- grep("Q-value|q-value|Q_value", names(subset_df),
+                             ignore.case = TRUE, value = TRUE)[1]
+                if (is.na(q_col)) q_col <- "Q-value"
 
-              subset_df$miRNAs_annotated <- sapply(subset_df[[mirna_col]], function(m) {
-                format_mirna_with_stats(m, cox_df, "z", "z")
-              })
+                subset_df <- subset_df[order(subset_df[[q_col]]), ]
+                subset_df <- head(subset_df, top_n)
 
-              # Build output row
-              for (j in seq_len(nrow(subset_df))) {
-                surv_results_list[[length(surv_results_list) + 1]] <- data.frame(
-                  analysis = "SurvivalRank_CoxZ",
-                  Category = cat_name,
-                  Subcategory = subset_df$Subcategory[j],
-                  Enrichment = enrich_dir,
-                  Q_value = subset_df[[q_col]][j],
-                  Observed = subset_df$Observed[j],
-                  miRNAs_with_rank = subset_df$miRNAs_annotated[j],
-                  stringsAsFactors = FALSE
-                )
+                # Format miRNAs with rank and z-score (rank from GSEA list)
+                mirna_col <- grep("miRNA|precursor", names(subset_df),
+                                 ignore.case = TRUE, value = TRUE)[1]
+                if (is.na(mirna_col)) mirna_col <- "miRNAs/precursors"
+
+                subset_df$miRNAs_annotated <- sapply(subset_df[[mirna_col]], function(m) {
+                  format_mirna_with_stats(m, cox_rank, "z", "z")
+                })
+
+                # Build output row
+                for (j in seq_len(nrow(subset_df))) {
+                  surv_results_list[[length(surv_results_list) + 1]] <- data.frame(
+                    analysis = "SurvivalRank_CoxZ",
+                    Category = cat_name,
+                    Subcategory = subset_df$Subcategory[j],
+                    Enrichment = enrich_dir,
+                    Q_value = subset_df[[q_col]][j],
+                    Observed = subset_df$Observed[j],
+                    miRNAs_with_rank = subset_df$miRNAs_annotated[j],
+                    stringsAsFactors = FALSE
+                  )
+                }
               }
             }
-          }
 
-          # Combine and save survival-based report
-          if (length(surv_results_list) > 0) {
-            surv_report <- do.call(rbind, surv_results_list)
+            # Combine and save survival-based report
+	            if (length(surv_results_list) > 0) {
+	              surv_report <- do.call(rbind, surv_results_list)
 
-            out_file <- file.path(out_dir,
-                                  paste0("GSEA_survGSEA_top", top_n, "_annotated_", ts, ".csv"))
-            write.csv(surv_report, out_file, row.names = FALSE)
-            cat("\nSurvival-based report saved:", out_file, "\n")
-            cat("Total rows:", nrow(surv_report), "\n")
-          }
-        }
-      } else {
-        cat("GSEA results file not found for survival analysis\n")
-      }
+              out_file <- file.path(out_dir,
+                                    paste0("GSEA_survGSEA_top", top_n, "_annotated_", ts, ".csv"))
+              write.csv(surv_report, out_file, row.names = FALSE)
+              cat("\nSurvival-based report saved:", out_file, "\n")
+              cat("Total rows:", nrow(surv_report), "\n")
+	            }
+	          }
+	        } else {
+	          cat("GSEA results file not found for survival analysis\n")
+	        }
     }
   }
+}
 }
 
 # Close log
