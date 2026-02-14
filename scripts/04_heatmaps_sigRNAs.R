@@ -58,7 +58,7 @@ res_dpi   <- as.integer(get_arg("--res",    "300"))
 
 ts <- format(Sys.time(), "%Y%m%d_%H%M%S")
 dir.create("logs", showWarnings = FALSE, recursive = TRUE)
-fig_root <- file.path("results","figures","heatmaps")
+fig_root <- get_arg("--fig_root", file.path("results","figures","heatmaps"))
 dir.create(fig_root, showWarnings = FALSE, recursive = TRUE)
 
 log_fp <- file.path("logs", paste0("heatmaps_sigRNAs_", ts, ".txt"))

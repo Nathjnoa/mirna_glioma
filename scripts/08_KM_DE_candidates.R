@@ -52,8 +52,8 @@ min_group_n <- as.integer(get_arg("--min_group_n", "5"))
 fdr_cut <- as_num(get_arg("--fdr_cut", "0.1"))
 
 # Outputs
-fig_dir <- file.path("results","figures","KM_DE_candidates")
-tab_dir <- file.path("results","tables","KM_DE_candidates")
+fig_dir <- get_arg("--fig_root", file.path("results","figures","KM_DE_candidates"))
+tab_dir <- get_arg("--tab_root", file.path("results","tables","KM_DE_candidates"))
 dir.create("logs", showWarnings = FALSE, recursive = TRUE)
 dir.create(fig_dir, showWarnings = FALSE, recursive = TRUE)
 dir.create(tab_dir, showWarnings = FALSE, recursive = TRUE)

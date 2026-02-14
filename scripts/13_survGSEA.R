@@ -140,8 +140,15 @@ if (!is.null(cats_available) && is.data.frame(cats_available) && nrow(cats_avail
 if (!file.exists(counts_fp)) stop("Counts file not found: ", counts_fp)
 if (!file.exists(meta_fp)) stop("Metadata file not found: ", meta_fp)
 
-counts_df <- read.csv(counts_fp, check.names = FALSE)
-meta <- read.csv(meta_fp, check.names = FALSE)
+read_table <- function(path) {
+  if (requireNamespace("data.table", quietly = TRUE)) {
+    data.table::fread(path, data.table = FALSE, check.names = FALSE)
+  } else {
+    read.csv(path, check.names = FALSE)
+  }
+}
+counts_df <- read_table(counts_fp)
+meta <- read_table(meta_fp)
 
 if (!("id" %in% names(counts_df))) stop("Counts table missing column 'id'")
 if (!("type" %in% names(counts_df))) stop("Counts table missing column 'type'")

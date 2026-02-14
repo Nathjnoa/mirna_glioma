@@ -57,7 +57,7 @@ res_dpi   <- as.integer(get_arg("--res",    "300"))
 ts <- format(Sys.time(), "%Y%m%d_%H%M%S")
 dir.create("logs", showWarnings = FALSE, recursive = TRUE)
 
-out_root <- file.path("results","figures","deg_qc")
+out_root <- get_arg("--out_root", file.path("results","figures","deg_qc"))
 dir.create(out_root, showWarnings = FALSE, recursive = TRUE)
 
 log_fp <- file.path("logs", paste0("deg_qc_plots_", ts, ".txt"))
