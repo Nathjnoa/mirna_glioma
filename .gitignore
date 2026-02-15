@@ -1,35 +1,78 @@
 # Data (large/sensitive - not tracked)
 data/
 
-# Results - exclude tables and intermediate, but track publication figures and summary reports
-results/tables/*
-!results/tables/reports/
-results/DE/
+# Logs
 logs/
 
+# ── results_23s (23 samples run) ──────────────────────────────
+results_23s/tables/*
+!results_23s/tables/reports/
+results_23s/DE/
+
 # Track publication-quality figures (PNG only)
-!results/figures/
-!results/figures/**/*.png
+!results_23s/figures/
+!results_23s/figures/**/*.png
 
-# SurvivalRank_GSEA: only track reduced_rrvgo PNGs (final post-redundancy figures)
-results/figures/SurvivalRank_GSEA/**/*.pdf
-results/figures/SurvivalRank_GSEA/**/*.svg
-results/figures/SurvivalRank_GSEA/SurvivalRank_CoxZ_miRPathDB/*.png
-!results/figures/SurvivalRank_GSEA/SurvivalRank_CoxZ_miRPathDB/reduced_rrvgo/**/*.png
-!results/figures/SurvivalRank_GSEA/z_stat_distribution.png
+# SurvivalRank_GSEA: only track reduced_rrvgo PNGs
+results_23s/figures/SurvivalRank_GSEA/**/*.pdf
+results_23s/figures/SurvivalRank_GSEA/**/*.svg
+results_23s/figures/SurvivalRank_GSEA/SurvivalRank_CoxZ_miRPathDB/**/*.png
+!results_23s/figures/SurvivalRank_GSEA/SurvivalRank_CoxZ_miRPathDB/reduced_rrvgo/**/*.png
+!results_23s/figures/SurvivalRank_GSEA/z_stat_distribution.png
 
-# MiEAA_GSEA_bubble: only track selected comparison PNGs (main comparisons)
-results/figures/MiEAA_GSEA_bubble/**/*.pdf
-results/figures/MiEAA_GSEA_bubble/**/*.svg
-results/figures/MiEAA_GSEA_bubble/**/*.png
-!results/figures/MiEAA_GSEA_bubble/**/*EDAD_cont_10y*.png
-!results/figures/MiEAA_GSEA_bubble/**/*KI67_20*.png
-!results/figures/MiEAA_GSEA_bubble/**/*EGFR_VIII*.png
+# MiEAA_GSEA_bubble: only track selected comparison PNGs
+results_23s/figures/MiEAA_GSEA_bubble/**/*.pdf
+results_23s/figures/MiEAA_GSEA_bubble/**/*.svg
+results_23s/figures/MiEAA_GSEA_bubble/**/*.png
+!results_23s/figures/MiEAA_GSEA_bubble/**/*EDAD_cont_10y*.png
+!results_23s/figures/MiEAA_GSEA_bubble/**/*KI67_20*.png
+!results_23s/figures/MiEAA_GSEA_bubble/**/*EGFR_VIII*.png
 
-# Exclude KM figures (exploratory, not final)
-results/figures/KM_DE_candidates/
+# Exclude exploratory/QC figures
+results_23s/figures/KM_DE_candidates/
+results_23s/figures/MiEAA_GSEA_QC/
+results_23s/figures/MiEAA_GSEA_categories_pvals/
+results_23s/figures/deg_qc/
+results_23s/figures/inspeccion/
+results_23s/figures/matching/
+results_23s/figures/qc_34samples/
+results_23s/figures/qc_mds/
+results_23s/figures/heatmaps/**/*.txt
 
-# Exclude survival exploratory scripts (not in final pipeline)
+# ── results_29s (29 samples run) ──────────────────────────────
+results_29s/tables/*
+!results_29s/tables/reports/
+results_29s/DE/
+
+# Track publication-quality figures (PNG only)
+!results_29s/figures/
+!results_29s/figures/**/*.png
+
+# SurvivalRank_GSEA: only track reduced_rrvgo PNGs
+results_29s/figures/SurvivalRank_GSEA/**/*.pdf
+results_29s/figures/SurvivalRank_GSEA/**/*.svg
+results_29s/figures/SurvivalRank_GSEA/SurvivalRank_CoxZ_miRPathDB/**/*.png
+!results_29s/figures/SurvivalRank_GSEA/SurvivalRank_CoxZ_miRPathDB/reduced_rrvgo/**/*.png
+!results_29s/figures/SurvivalRank_GSEA/z_stat_distribution.png
+
+# MiEAA_GSEA_bubble: track 5 comparisons with DEGs
+results_29s/figures/MiEAA_GSEA_bubble/**/*.pdf
+results_29s/figures/MiEAA_GSEA_bubble/**/*.svg
+results_29s/figures/MiEAA_GSEA_bubble/**/*.png
+!results_29s/figures/MiEAA_GSEA_bubble/**/*EDAD_cont_10y*.png
+!results_29s/figures/MiEAA_GSEA_bubble/**/*KI67_20*.png
+!results_29s/figures/MiEAA_GSEA_bubble/**/*OLIG_2_1_vs_0*.png
+!results_29s/figures/MiEAA_GSEA_bubble/**/*RESECCION_2_vs_01*.png
+!results_29s/figures/MiEAA_GSEA_bubble/**/*SINAPTOFISINA_1_vs_0*.png
+
+# Exclude exploratory/QC figures
+results_29s/figures/KM_DE_candidates/
+results_29s/figures/MiEAA_GSEA_QC/
+results_29s/figures/MiEAA_GSEA_categories_pvals/
+results_29s/figures/deg_qc/
+results_29s/figures/heatmaps/**/*.txt
+
+# ── Scripts excluded from pipeline (not in final) ────────────
 scripts/06_survival_exploratory_spearman.R
 scripts/07_survival_cox_univariate.R
 
