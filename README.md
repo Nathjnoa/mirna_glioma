@@ -9,10 +9,19 @@ This project implements a comprehensive analysis pipeline for small RNA sequenci
 1. **Quality Control** (Scripts 01-02): Count matrix inspection, TMM normalization, MDS visualization
 2. **Matched Group Design** (Script 02b): Age-matched case-control groups (1:2 ratio) for confounding control
 3. **Differential Expression** (Script 03): edgeR quasi-likelihood framework with multiple comparison modes
-3. **Visualization** (Scripts 04-05): Heatmaps and feature-level QC plots
-4. **Survival Analysis** (Script 08): Kaplan-Meier curves for DE candidates
-5. **Functional Enrichment - DE-based** (Scripts 09-12): miEAA GSEA with bubble plots and QC visualizations
-6. **Functional Enrichment - Survival-based** (Scripts 13-16): Survival-ranked GSEA, enrichment plots, GO redundancy reduction (rrvgo)
+4. **Visualization** (Scripts 04-05): Heatmaps and feature-level QC plots
+5. **Survival Analysis** (Script 08): Kaplan-Meier curves for DE candidates
+6. **Functional Enrichment - DE-based** (Scripts 09-12): miEAA GSEA with bubble plots and QC visualizations
+7. **Functional Enrichment - Survival-based** (Scripts 13-18):
+   - **Script 13**: Survival-ranked GSEA with Cox z-scores (miEAA API)
+   - **Script 16**: Redundancy reduction via rrvgo (semantic similarity for GO terms)
+   - **Script 18**: Jaccard-based redundancy reduction (Enrichment Map method)
+     - Jaccard similarity + hierarchical clustering for KEGG/Reactome
+     - rrvgo semantic similarity for GO Biological Process
+     - **Critical fix**: Includes singleton pathways (unique, non-redundant terms)
+     - Output: 2,132 pathways (representatives + singletons)
+     - Generates bubble plots (top 12 per database)
+   - **query_pathway_clusters.R**: Interactive tool to explore pathway clustering
 
 ## Repository Structure
 
@@ -22,11 +31,34 @@ mirna_glioma/
 ├── docs/             # Methods documentation
 │   └── METHODS_scripts.md   # Detailed computational methods
 ├── env/              # Conda environment definition
-├── scripts/          # R analysis pipeline (01-05, 08-16)
+├── scripts/          # R analysis pipeline (01-18, query_pathway_clusters)
 ├── data/             # Input data (local, gitignored)
-├── results/          # Output tables and figures (local, gitignored)
+├── results_23s/      # 23-sample baseline analysis (gitignored, tracked PNGs only)
+├── results_29s/      # 29-sample extended analysis (gitignored, tracked PNGs only)
 └── logs/             # Timestamped execution logs (local, gitignored)
 ```
+
+## Results
+
+The repository includes two parallel result sets:
+
+### results_23s/ (Baseline — 23 samples)
+
+Original analysis with 23 glioma samples (published baseline).
+
+### results_29s/ (Updated — 29 samples)
+
+Extended analysis with 29 samples including new methodological improvements:
+
+- **Jaccard-based pathway reduction** (script 18) replaces rrvgo-only approach
+- **Singleton inclusion fix**: 2,132 non-redundant pathways (vs 208 in old method)
+- Results in `reduced_jaccard/` directory with:
+  - Full annotated table (cluster assignments)
+  - Reduced representative set (2,132 pathways)
+  - Bubble plots (top 12 per database)
+  - Clustering summary statistics
+
+Both result sets track PNG figures only (PDF/SVG gitignored for size).
 
 ## Quick Start
 
@@ -72,7 +104,37 @@ Rscript scripts/13_survGSEA.R
 Rscript scripts/14_survGSEA_plots.R
 Rscript scripts/15_survGSEA_enrichment_plot.R --preset single_col
 Rscript scripts/16_survGSEA_reduce_redundancy.R --sim_threshold 0.9
+Rscript scripts/18_reduce_redundancy_jaccard.R --sim_threshold 0.25
+
+# Query pathway clustering (interactive)
+Rscript scripts/query_pathway_clusters.R
 ```
+
+## Interactive Results Explorer (Shiny App)
+
+Explore analysis results interactively through a web-based dashboard:
+
+### Launch the App
+
+```bash
+cd ~/bioinfo/projects/mirna_glioma/app
+conda activate omics-R
+Rscript -e "shiny::runApp(port=3838)"
+```
+
+Then open your browser to: **http://localhost:3838**
+
+### Features
+
+- **Quality Control Tab**: Library sizes, MDS plots, sample QC metrics
+- **Differential Expression Tab**: Interactive tables, volcano plots, 10 clinical comparisons
+- **Survival GSEA Tab**: Pathway enrichment with redundancy reduction (rrvgo/Jaccard)
+
+### Documentation
+
+See [app/README_app.md](app/README_app.md) for detailed usage instructions and troubleshooting.
+
+---
 
 ## Software Requirements
 
@@ -82,9 +144,26 @@ Rscript scripts/16_survGSEA_reduce_redundancy.R --sim_threshold 0.9
 
 ## Documentation
 
-- **Computational Methods**: [docs/METHODS_scripts.md](docs/METHODS_scripts.md) — Complete pipeline documentation with parameters, outputs, and figure interpretation guide
-- **Runbook**: [docs/RUNBOOK.md](docs/RUNBOOK.md) — Step-by-step reproduction instructions with checklist
-- **Outputs Map**: [docs/OUTPUTS.md](docs/OUTPUTS.md) — Output directory structure and naming conventions
+Located in `/docs/`:
+
+| File | Purpose |
+|------|---------|
+| [METHODS_scripts.md](docs/METHODS_scripts.md) | Complete pipeline documentation with parameters, outputs, and figure interpretation guide |
+| [RUNBOOK.md](docs/RUNBOOK.md) | Step-by-step reproduction instructions with checklist |
+| [OUTPUTS.md](docs/OUTPUTS.md) | Output directory structure and naming conventions |
+| [GUIA_survGSEA_pipeline.md](docs/GUIA_survGSEA_pipeline.md) / [.pdf](docs/GUIA_survGSEA_pipeline.pdf) | **Spanish pedagogical guide**: Cox model → z-score ranking → GSEA → Jaccard reduction → interpretation |
+
+**The pedagogical guide (GUIA)** explains the complete survGSEA methodology for non-experts, including:
+- Cox proportional hazards model (β, HR, z-score)
+- Ranking by z-score for GSEA
+- miEAA enrichment interpretation
+- Jaccard reduction method (Enrichment Map approach)
+- Bubble plot reading guide
+
+### Key References
+
+- **Survival GSEA validation**: Lee et al. (2011) BMC Bioinformatics — validates Cox z-score ranking for GSEA
+- **Jaccard reduction method**: Merico et al. (2010) PLoS ONE — Enrichment Map / Jaccard clustering approach
 
 ## Output Highlights
 
