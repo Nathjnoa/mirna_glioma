@@ -1,0 +1,7 @@
+Database	Direction	Method	Input	Output	Reduction_pct	N_clusters	Median_Jaccard	Threshold	Min_cluster_size
+KEGG	enriched	Jaccard_hclust	24	14	41.7	14	0.042	0.25	1
+KEGG	depleted	Jaccard_hclust	105	36	65.7	36	0.132	0.25	1
+Reactome	enriched	Jaccard_hclust	129	19	85.3	19	0.040	0.5	2
+Reactome	depleted	Jaccard_hclust	518	93	82	93	0.048	0.5	2
+GO_BP	enriched	rrvgo_semantic	183	17	90.7	-	-	0.9	-
+GO_BP	depleted	rrvgo_semantic	1276	31	97.6	-	-	0.9	-

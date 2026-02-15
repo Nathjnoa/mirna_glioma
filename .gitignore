@@ -42,17 +42,19 @@ results_23s/figures/heatmaps/**/*.txt
 # ── results_29s (29 samples run) ──────────────────────────────
 results_29s/tables/*
 !results_29s/tables/reports/
+!results_29s/tables/SurvivalRank_GSEA/SurvivalRank_CoxZ_miRPathDB/reduced_jaccard/
 results_29s/DE/
 
 # Track publication-quality figures (PNG only)
 !results_29s/figures/
 !results_29s/figures/**/*.png
 
-# SurvivalRank_GSEA: only track reduced_rrvgo PNGs
+# SurvivalRank_GSEA: track reduced_rrvgo and reduced_jaccard PNGs
 results_29s/figures/SurvivalRank_GSEA/**/*.pdf
 results_29s/figures/SurvivalRank_GSEA/**/*.svg
 results_29s/figures/SurvivalRank_GSEA/SurvivalRank_CoxZ_miRPathDB/**/*.png
 !results_29s/figures/SurvivalRank_GSEA/SurvivalRank_CoxZ_miRPathDB/reduced_rrvgo/**/*.png
+!results_29s/figures/SurvivalRank_GSEA/SurvivalRank_CoxZ_miRPathDB/reduced_jaccard/**/*.png
 !results_29s/figures/SurvivalRank_GSEA/z_stat_distribution.png
 
 # MiEAA_GSEA_bubble: track 5 comparisons with DEGs
